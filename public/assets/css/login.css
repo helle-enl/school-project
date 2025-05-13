@@ -1,0 +1,120 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: url("./../images/buying and selling.avif") no-repeat center center /
+    cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(76, 175, 80, 0.3); /* green overlay */
+  z-index: 0;
+}
+
+.login-container {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(to right, #76b852, #8dc26f);
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.brand-title {
+  text-align: center;
+  font-size: 24px;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.login-header {
+  text-align: center;
+  color: #000;
+  margin-bottom: 5px;
+}
+
+.login-subtext {
+  text-align: center;
+  color: #000;
+  margin-bottom: 30px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-field {
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-field:focus {
+  border-color: #4caf50;
+}
+
+.login-button {
+  padding: 12px;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #45a049;
+}
+
+.forgot-password {
+  text-align: center;
+  font-size: 14px;
+  color: #3f8d54;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+.signup-section {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.signup-section h4 {
+  font-size: 14px;
+  color: #333;
+}
+
+.signup-link {
+  color: #3f8d54;
+  text-decoration: none;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
