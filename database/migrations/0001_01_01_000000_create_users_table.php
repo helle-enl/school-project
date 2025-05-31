@@ -22,10 +22,14 @@ return new class extends Migration
             // Contact
             $table->string('email')->unique();
             $table->string('whatsapp_number')->nullable();
-            $table->string('farm_contact')->nullable();  // Contact number specific to the farm
+            $table->string('phone_number')->nullable();
+            $table->string('profile_picture')->nullable();
 
             // Location
             $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            $table->string('country')->nullable();
+            $table->string('address')->nullable();
 
             // Role: farmer or buyer
             $table->enum('role', ['farmer', 'buyer'])->default('buyer');
@@ -36,9 +40,9 @@ return new class extends Migration
             $table->string('farm_location')->nullable();
             $table->string('farm_size')->nullable();  // e.g., in hectares or acres
             $table->enum('farm_type', ['crop', 'livestock', 'mixed'])->nullable();
-            $table->text('farm_products')->nullable();  // Description or list of products
             $table->text('about_farmer')->nullable();   // A brief about the farmer
             $table->json('social_media')->nullable();  // Social media links (as JSON)
+            $table->string('farm_contact')->nullable();  // Contact number specific to the farm
 
             // Auth fields
             $table->timestamp('email_verified_at')->nullable();

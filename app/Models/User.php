@@ -15,22 +15,42 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
+        // Name Fields
         'first_name',
         'last_name',
+
+        // Contact
         'email',
         'whatsapp_number',
+        'phone_number',
+        'profile_picture',
+
+        // Location
+        'city',
+        'state',
+        'country',
+        'address',
+
+        // Role
+        'role',
+
+        // Farm Details
         'farm_name',
         'farm_location',
         'farm_size',
         'farm_type',
-        'farm_products',
         'about_farmer',
         'social_media',
+        'farm_contact',
+
+        // Auth fields
         'password',
+        'email_verified_at',
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -52,6 +72,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'social_media' => 'array',
         ];
     }
 }
