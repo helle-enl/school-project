@@ -20,6 +20,9 @@ class ProductOrder extends Model
         'payment_method',
         'paid_at',
         'delivered_at',
+        'note',
+        'tracking_number',
+        'shipping_address'
     ];
 
     public function buyer()

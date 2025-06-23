@@ -27,7 +27,9 @@ return new class extends Migration
             $table->string('payment_method')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
-
+            $table->longText('note')->nullable();
+            $table->longText('shipping_address')->nullable();
+            $table->string('tracking_number')->nullable();
             $table->timestamps();
         });
     }

@@ -29,14 +29,13 @@ class FarmProduct extends Model
     }
 
 
-    // public function orders()
-    // {
-    //     return $this->hasMany(ProductOrder::class, 'product_id');
-    // }
+
     public function orders(): HasMany
     {
         return $this->hasMany(ProductOrder::class, 'product_id');
     }
+
+
 
     public function farmer()
     {

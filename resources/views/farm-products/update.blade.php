@@ -632,27 +632,7 @@
 
 @section('content')
     <div class="create-product-container">
-        @if (session('success'))
-            <div class="success-message fade-in">
-                <i class="fas fa-check-circle"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
 
-        @if ($errors->any())
-            <div class="error-message fade-in"
-                style="background: rgba(244, 67, 54, 0.1); color: #c62828; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #f44336;">
-                <i class="fas fa-exclamation-triangle"></i>
-                <div>
-                    <strong>Please fix the following errors:</strong>
-                    <ul style="margin: 8px 0 0 20px;">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-        @endif
 
         <!-- Changes Indicator -->
         <div class="changes-indicator" id="changesIndicator">

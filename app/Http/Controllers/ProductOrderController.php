@@ -8,12 +8,16 @@ use Illuminate\Http\Request;
 
 class ProductOrderController extends Controller
 {
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'buyer_id' => 'required|exists:users,id',
             'product_id' => 'required|exists:farm_products,id',
             'quantity' => 'required|integer|min:1',
+            'note' => 'nullable|string',
+            'tracking_number' => 'nullable|string',
+            'shipping_address' => 'nullable|string',
         ]);
 
         $product = FarmProduct::findOrFail($validated['product_id']);
@@ -44,5 +48,59 @@ class ProductOrderController extends Controller
             'units_sold' => $unitsSold,
             'orders' => $orders,
         ]);
+    }
+
+    public function index(Request $request)
+    {
+        $orders = ProductOrder::where('farmer_id', $request->user()->id)->orderBy('created_at')->paginate(6);
+
+        return view('orders.index', [
+            'orders' => $orders,
+        ]);
+    }
+
+    public function show($id)
+    {
+        $order = ProductOrder::findOrFail($id);
+
+        return view('orders.show', [
+            'order' => $order,
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $order = ProductOrder::findOrFail($id);
+
+        return view('orders.edit', [
+            'order' => $order,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+
+        $validated = $request->validate([
+            'note' => 'nullable|string',
+            'tracking_number' => 'nullable|string',
+            'shipping_address' => 'nullable|string',
+            'quantity' => 'required|integer|min:1',
+            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+        ]);
+
+        $order = ProductOrder::findOrFail($id);
+        $order->update($validated);
+
+        return redirect()->route('orders.show', $order->id)
+            ->with('success', 'Order updated successfully');
+    }
+
+    public function destroy($id)
+    {
+        $order = ProductOrder::findOrFail($id);
+        $order->delete();
+
+        return redirect()->route('orders.index')
+            ->with('success', 'Order deleted successfully');
     }
 }

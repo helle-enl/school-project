@@ -13,27 +13,6 @@
 @section('content')
     <section class="product-form-section" style="margin: auto; max-width: 875px;">
 
-        {{-- Validation Errors --}}
-        @if ($errors->any())
-            <div class="alert alert-error"
-                style="
-                max-width: 900px; 
-                margin: 10px auto 30px;
-                padding: 12px 18px; 
-                border-radius: 4px; 
-                font-weight: 600;
-                color: #b71c1c;
-                background-color: #f8d7da;
-                border: 1px solid #f5c6cb;
-            ">
-                <strong>There were some problems with your input:</strong>
-                <ul style="margin-top: 8px; padding-left: 20px; list-style-type: disc;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
 
         <form class="product-form" method="POST" action="{{ route('farm-products.update', $product->id) }}"
             enctype="multipart/form-data">

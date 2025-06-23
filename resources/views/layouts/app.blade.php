@@ -151,8 +151,9 @@
         main {
             flex-grow: 1;
             padding: 2rem 1rem;
-            max-width: 1400px;
-            margin: auto;
+            /* max-width: 1400px; */
+            /* margin: auto; */
+            widows: 100%
         }
 
         .footer {
@@ -212,6 +213,28 @@
                 margin: 10px 0;
             }
         }
+
+        .error-message {
+            color: #f44336;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Success Message */
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            color: #2E7D32;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #4CAF50;
+        }
     </style>
 
     @yield('styles')
@@ -236,7 +259,7 @@
                         <a href="{{ route('farm-products-categories.index') }}">Categories</a>
                     </div>
                 </li>
-                <li><a href="#">Orders</a></li>
+                <li><a href="{{ route('orders.index') }}">Orders</a></li>
             </ul>
 
             <form method="POST" action="{{ route('logout') }}">
@@ -253,29 +276,35 @@
         </nav>
     </header>
 
-    {{-- Flash Messages --}}
-    @foreach (['success', 'error'] as $msg)
-        @if (session($msg))
-            <div class="alert alert-{{ $msg }}">{{ session($msg) }}</div>
-        @endif
-    @endforeach
 
-    @if ($errors->any())
-        <div class="alert alert-error">
-            <strong>There were some problems:</strong>
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
 
     @hasSection('header')
         <div class="page-header">@yield('header')</div>
     @endif
 
     <main>
+        <div style="margin:auto; max-width: 700px; padding: 0 1rem;">
+            @if (session('success'))
+                <div class="success-message fade-in">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="error-message fade-in"
+                    style="background: rgba(244, 67, 54, 0.1); color: #c62828; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #f44336;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>Please fix the following errors:</strong>
+                        <ul style="margin: 8px 0 0 20px;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+        </div>
         @yield('content')
     </main>
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FarmProductController;
+use App\Http\Controllers\ProductOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Models\FarmProduct;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +63,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/farm-products-categories/{category}', [FarmProductController::class, 'update_category'])->name('farm-products-categories.update');
     Route::delete('/farm-products-categories', [FarmProductController::class, 'destroy_category'])->name('farm-products-categories.destroy');
     //End Farm Products Categories Routes
+
+    // Order Routes
+
+    Route::get('/orders/', [ProductOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [ProductOrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/edit', [ProductOrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/orders/{order}', [ProductOrderController::class, 'update'])->name('orders.update');
+    Route::delete('/{order}', [ProductOrderController::class, 'destroy'])->name('orders.destroy');
 });
 
 require __DIR__ . '/auth.php';
