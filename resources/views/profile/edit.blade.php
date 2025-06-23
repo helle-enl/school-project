@@ -25,16 +25,158 @@
 @section('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* PROFILE SPECIAL */
+
+        .profile-section {
+            padding: 80px 40px 40px;
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 960px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin: 120px auto 40px;
+            text-align: center;
+            color: #333;
         }
 
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
+        h1 {
+            font-size: 28px;
+            color: #2c6e49;
+            margin-bottom: 20px;
+        }
+
+        .profile {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-left,
+        .profile-right {
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 20px;
+        }
+
+        .profile-pic {
+            height: 120px;
+            width: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 3px solid #ddd;
+        }
+
+        .profile h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 12px;
+        }
+
+        .profile-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .profile-info strong {
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        .profile-info span {
+            color: #2c6b2f;
+        }
+
+        .edit h3 {
+            margin-top: 40px;
+            font-size: 20px;
+            color: #2c6b2f;
+            font-weight: 600;
+            border-bottom: 2px solid #2c6b2f;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .profile-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .profile-form-step-2 {
+            display: block;
+            /* flex-direction: column;
+        gap: 20px; */
+            margin-top: 20px;
+        }
+
+        .form-group.profile-form-input-step-1 {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.profile-form-input-step-2 {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .profile-form {
+                display: block;
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group label {
+            font-size: 15px;
+            font-weight: bold;
+            text-align: left;
+            color: #2c6b2f;
+            margin-bottom: 12px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="tel"],
+        .form-group input[type="email"],
+        .form-group textarea {
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            color: #333;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="tel"]:focus,
+        .form-group input[type="email"]:focus,
+        .form-group textarea:focus {
+            border-color: #4caf50;
+            background-color: #ecf0f1;
+        }
+
+        .sub {
+            background-color: #4caf50;
+            padding: 12px 25px;
+            font-size: 16px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            grid-column: span 2;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .sub:hover {
+            background-color: #4caf50;
         }
 
         .profile-container {
@@ -478,8 +620,8 @@
 
                     <div class="form-group profile-form-input-step-1">
                         <label for="address">Address:</label>
-                        <input type="text" id="address" name="address" value="{{ old('address', $user->address) }}"
-                            required />
+                        <input type="text" id="address" name="address"
+                            value="{{ old('address', $user->address) }}" required />
                     </div>
 
                     <div class="form-group profile-form-input-step-1">

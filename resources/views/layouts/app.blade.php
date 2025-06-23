@@ -151,10 +151,8 @@
         main {
             flex-grow: 1;
             padding: 2rem 1rem;
-            /* max-width: 1000px; */
+            max-width: 1400px;
             margin: auto;
-            padding: 32px;
-            margin: 20px auto;
         }
 
         .footer {
