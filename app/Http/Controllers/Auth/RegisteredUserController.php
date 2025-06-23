@@ -43,7 +43,7 @@ class RegisteredUserController extends Controller
             'farm_products' => ['nullable', 'string'],
             'about_farmer' => ['nullable', 'string'],
             'social_media' => ['nullable', 'json'],
-            'role' => ['nullable', 'string', Rule::in(['farmer','buyer']), 'max:255'],
+            'role' => ['nullable', 'string', Rule::in(['farmer', 'buyer']), 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
         // dd($validated);
