@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FarmProduct extends Model
 {
@@ -25,5 +26,20 @@ class FarmProduct extends Model
     public function category()
     {
         return $this->belongsTo(FarmProductCategory::class, 'category_id');
+    }
+
+
+    // public function orders()
+    // {
+    //     return $this->hasMany(ProductOrder::class, 'product_id');
+    // }
+    public function orders(): HasMany
+    {
+        return $this->hasMany(ProductOrder::class, 'product_id');
+    }
+
+    public function farmer()
+    {
+        return $this->belongsTo(User::class, 'farmer_id');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -74,5 +75,44 @@ class User extends Authenticatable
             'password' => 'hashed',
             'social_media' => 'array',
         ];
+    }
+
+    // Products this user owns (if a farmer)
+    public function farmProducts(): HasMany
+    {
+        return $this->hasMany(FarmProduct::class, 'farmer_id');
+    }
+
+    // Orders this user has made (as a buyer)
+    public function orders(): HasMany
+    {
+        return $this->hasMany(ProductOrder::class, 'buyer_id');
+    }
+
+
+
+    public function sales()
+    {
+        return $this->hasManyThrough(
+            ProductOrder::class,
+            FarmProduct::class,
+            'farmer_id', // Foreign key on FarmProduct table
+            'product_id', // Foreign key on ProductOrder table
+            'id', // Local key on User table
+            'id' // Local key on FarmProduct table
+        );
+    }
+
+    // If needed, all customers who bought from this farmer
+    public function customers()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            ProductOrder::class,
+            'product_id', // Foreign key on ProductOrder table
+            'id',         // Local key on User table
+            'id',         // Local key on this model (farmer_id)
+            'buyer_id'    // Foreign key on ProductOrder for buyer
+        );
     }
 }

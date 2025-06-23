@@ -16,6 +16,8 @@
         <form class="regis" method="POST" action="{{ route('register') }}">
             @csrf
 
+            <input type="hidden" name="role" value="farmer" />
+
             <!-- First Name -->
             <input class="put" type="text" name="first_name" placeholder="First Name"
                 value="{{ old('first_name') }}" required />
