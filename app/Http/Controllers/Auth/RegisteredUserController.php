@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -42,7 +43,7 @@ class RegisteredUserController extends Controller
             'farm_products' => ['nullable', 'string'],
             'about_farmer' => ['nullable', 'string'],
             'social_media' => ['nullable', 'json'],
-            'role' => ['nullable', 'enum:farmer,buyer', 'max:255'],
+            'role' => ['nullable', 'string', Rule::in(['farmer','buyer']), 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
         // dd($validated);
@@ -60,6 +61,7 @@ class RegisteredUserController extends Controller
             'farm_products' => $validated['farm_products'] ?? null,
             'about_farmer' => $validated['about_farmer'] ?? null,
             'social_media' => $validated['social_media'] ?? null,
+            'role' => $validated['role'] ?? null,
             'password' => Hash::make($validated['password']),
         ]);
 

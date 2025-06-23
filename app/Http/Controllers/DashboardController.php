@@ -164,7 +164,7 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            return view('buyer-dashboard', compact(
+            return view('dashboard', compact(
                 'orders',
                 'totalOrders',
                 'totalSpent',
