@@ -95,7 +95,7 @@ class FarmProductController extends Controller
         if ($request->hasFile('product_image')) {
             $image = $request->file('product_image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('/', $filename, 'product_images');
+            $path = $image->storeAs('', $filename, 'product_images');
 
             $validated['product_image'] = $path;
         }
@@ -312,7 +312,7 @@ class FarmProductController extends Controller
         if ($request->hasFile('product_image')) {
             $image = $request->file('product_image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('/', $filename, 'product_images');
+            $path = $image->storeAs('', $filename, 'product_images');
 
             // Optional: delete old image
             if ($farmProduct->product_image && Storage::disk('product_images')->exists($farmProduct->product_image)) {

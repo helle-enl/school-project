@@ -65,7 +65,7 @@ class ProfileController extends Controller
         if ($request->hasFile('profile_picture')) {
             $image = $request->file('profile_picture');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('/', $filename, 'profile_pictures');
+            $path = $image->storeAs('', $filename, 'profile_pictures');
 
             // Optional: delete old image
             if ($user->profile_picture && Storage::disk('profile_pictures')->exists($user->profile_picture)) {
