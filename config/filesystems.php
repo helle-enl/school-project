@@ -64,6 +64,8 @@ return [
             'root' => public_path('profile_pictures'),
             'url' => env('APP_URL') . '/profile_pictures',
             'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
         ],
 
         'product_images' => [
@@ -71,6 +73,8 @@ return [
             'root' => public_path('product_images'),
             'url' => env('APP_URL') . '/product_images',
             'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
         ],
 
     ],

@@ -91,14 +91,31 @@ class FarmProductController extends Controller
 
 
 
+
         // Handle file upload
+        // if ($request->hasFile('product_image')) {
+        //     $image = $request->file('product_image');
+        //     $filename = time() . '_' . $image->getClientOriginalName();
+        //     dd($filename);
+        //     $path = $image->storeAs('/', $filename, 'public');
+
+        //     $validated['product_image'] = $path;
+        // }
         if ($request->hasFile('product_image')) {
             $image = $request->file('product_image');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('/farmer/' . $validated['farmer_id'], $filename, 'product_images');
 
-            $validated['product_image'] = $path;
+            if ($image->isValid()) {
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $destination = public_path('product_images');
+
+                // Move the file manually
+                $image->move($destination, $filename);
+
+                // Save relative path
+                $validated['product_image'] = $filename;
+            }
         }
+
 
         // Update other fields
         $product = FarmProduct::create($validated);
@@ -309,18 +326,42 @@ class FarmProductController extends Controller
         ]);
 
         // Handle file upload
+        // if ($request->hasFile('product_image')) {
+        //     $image = $request->file('product_image');
+        //     $filename = time() . '_' . $image->getClientOriginalName();
+        //     $path = $image->storeAs('', $filename, 'product_images');
+
+        //     // Optional: delete old image
+        //     if ($farmProduct->product_image && Storage::disk('product_images')->exists($farmProduct->product_image)) {
+        //         Storage::disk('product_images')->delete($farmProduct->product_image);
+        //     }
+
+        //     $validated['product_image'] = $path;
+        // }
+
         if ($request->hasFile('product_image')) {
             $image = $request->file('product_image');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('/farmer/' . $validated['farmer_id'], $filename, 'product_images');
 
-            // Optional: delete old image
-            if ($farmProduct->product_image && Storage::disk('product_images')->exists($farmProduct->product_image)) {
-                Storage::disk('product_images')->delete($farmProduct->product_image);
+            if ($image->isValid()) {
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $destination = public_path('product_images');
+
+                // Delete old image if it exists
+                if ($farmProduct->product_image) {
+                    $oldPath = public_path('product_images/' . $farmProduct->product_image);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath); // use @ to suppress warning if already gone
+                    }
+                }
+
+                // Move new image
+                $image->move($destination, $filename);
+
+                // Save new filename
+                $validated['product_image'] = $filename;
             }
-
-            $validated['product_image'] = $path;
         }
+
 
 
 

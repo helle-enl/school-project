@@ -62,17 +62,40 @@ class ProfileController extends Controller
         ]);
 
         // Handle file upload
+        // if ($request->hasFile('profile_picture')) {
+        //     $image = $request->file('profile_picture');
+        //     $filename = time() . '_' . $image->getClientOriginalName();
+        //     $path = $image->storeAs('', 'profile_pictures');
+
+        //     // Optional: delete old image
+        //     if ($user->profile_picture && Storage::disk('profile_pictures')->exists($user->profile_picture)) {
+        //         Storage::disk('profile_pictures')->delete($user->profile_picture);
+        //     }
+        //     // dd($path);
+        //     $validated['profile_picture'] = $path;
+        // }
+
         if ($request->hasFile('profile_picture')) {
             $image = $request->file('profile_picture');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('/user/' . $user->id, $filename, 'profile_pictures');
 
-            // Optional: delete old image
-            if ($user->profile_picture && Storage::disk('profile_pictures')->exists($user->profile_picture)) {
-                Storage::disk('profile_pictures')->delete($user->profile_picture);
+            if ($image->isValid()) {
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $destination = public_path('profile_pictures');
+
+                // Delete old image if it exists
+                if ($user->profile_picture) {
+                    $oldPath = public_path('profile_pictures/' . $user->profile_picture);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath); // suppress error if already deleted
+                    }
+                }
+
+                // Move new image
+                $image->move($destination, $filename);
+
+                // Save just the filename (relative path)
+                $validated['profile_picture'] = $filename;
             }
-            // dd($path);
-            $validated['profile_picture'] = $path;
         }
 
 
