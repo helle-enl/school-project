@@ -13,6 +13,10 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeFarmerMail;
+use App\Mail\WelcomeBuyerMail;
+
 class RegisteredUserController extends Controller
 {
     /**
@@ -67,6 +71,13 @@ class RegisteredUserController extends Controller
 
         // Fire the Registered event
         event(new Registered($user));
+
+        // Send welcome email based on user role
+        if ($user->role === 'farmer') {
+            Mail::to($user->email)->send(new WelcomeFarmerMail($user));
+        } elseif ($user->role === 'buyer') {
+            Mail::to($user->email)->send(new WelcomeBuyerMail($user));
+        }
 
         // Log the user in
         Auth::login($user);

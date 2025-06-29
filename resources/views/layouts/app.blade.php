@@ -250,16 +250,22 @@
 
 
             <ul class="nav-links" id="navMenu">
+                <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
                 <li><a href="{{ route('profile.edit') }}">Profile</a></li>
-                <li class="dropdown">
-                    <a href="#">Farm Products</a>
-                    <div class="dropdown-content">
-                        <a href="{{ route('farm-products.index') }}">All Products</a>
-                        <a href="{{ route('farm-products.create') }}">Add New</a>
-                        <a href="{{ route('farm-products-categories.index') }}">Categories</a>
-                    </div>
-                </li>
-                <li><a href="{{ route('orders.index') }}">Orders</a></li>
+                @if (auth()->user()->role === 'farmer')
+                    <li class="dropdown">
+                        <a href="#">Farm Products</a>
+                        <div class="dropdown-content">
+                            <a href="{{ route('farm-products.index') }}">All Products</a>
+                            <a href="{{ route('farm-products.create') }}">Add New</a>
+                            <a href="{{ route('farm-products-categories.index') }}">Categories</a>
+                        </div>
+                    </li>
+                    <li><a href="{{ route('orders.index') }}">Orders</a></li>
+                @elseif (auth()->user()->role === 'buyer')
+                    <li><a href="{{ route('buyer.orders.index') }}">Orders</a></li>
+                @endif
+
             </ul>
 
             <form method="POST" action="{{ route('logout') }}">

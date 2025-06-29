@@ -28,14 +28,10 @@ class FarmProduct extends Model
         return $this->belongsTo(FarmProductCategory::class, 'category_id');
     }
 
-
-
     public function orders(): HasMany
     {
         return $this->hasMany(ProductOrder::class, 'product_id');
     }
-
-
 
     public function farmer()
     {

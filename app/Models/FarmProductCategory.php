@@ -18,9 +18,10 @@ class FarmProductCategory extends Model
         return $this->hasMany(FarmProduct::class, 'category_id');
     }
 
-    public function activeProducts(): HasMany
+
+    public function publishedProducts(): HasMany
     {
         return $this->hasMany(FarmProduct::class, 'category_id')
-            ->where('status', 'active');
+            ->where('status', 'published');
     }
 }
