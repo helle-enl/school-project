@@ -147,28 +147,130 @@ class DashboardController extends Controller
                 'lowStockProducts'
             ));
         } else {
-            // Buyer dashboard
+            // Enhanced Buyer dashboard
+            $dateRange = $request->get('range', '30');
+            $startDate = Carbon::now()->subDays($dateRange);
+
+            // Get buyer's orders with relationships
             $orders = ProductOrder::where('buyer_id', $user->id)
-                ->with(['product', 'farmer'])
-                ->latest()
+                ->where('created_at', '>=', $startDate)
+                ->with(['product.farmer', 'product.category'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Calculate buyer metrics
+            $totalOrders = $orders->count();
+            $totalSpent = $orders->sum('total_price');
+            $averageOrderValue = $totalOrders > 0 ? $totalSpent / $totalOrders : 0;
+
+            // Order status breakdown
+            $pendingOrders = $orders->where('status', 'pending')->count();
+            $completedOrders = $orders->where('status', 'delivered')->count();
+            $processingOrders = $orders->where('status', 'processing')->count();
+            $cancelledOrders = $orders->where('status', 'cancelled')->count();
+
+            // Get unique farmers bought from
+            $totalFarmers = $orders->pluck('product.farmer_id')->unique()->count();
+
+            // Monthly spending data
+            $monthlyLabels = [];
+            $monthlyData = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $label = $date->format('M Y');
+                $spent = ProductOrder::where('buyer_id', $user->id)
+                    ->whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->sum('total_price');
+                $monthlyLabels[] = $label;
+                $monthlyData[] = floatval($spent);
+            }
+
+            // Weekly spending data
+            $weeklyLabels = [];
+            $weeklyData = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::today()->subDays($i);
+                $label = $date->format('M j');
+                $spent = ProductOrder::where('buyer_id', $user->id)
+                    ->whereDate('created_at', $date)
+                    ->sum('total_price');
+                $weeklyLabels[] = $label;
+                $weeklyData[] = floatval($spent);
+            }
+
+            // Top purchased products
+            $topProducts = ProductOrder::where('buyer_id', $user->id)
+                ->select('product_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(total_price) as total_spent'), DB::raw('SUM(quantity) as total_quantity'))
+                ->with('product.farmer')
+                ->groupBy('product_id')
+                ->orderByDesc('total_spent')
                 ->take(10)
                 ->get();
 
-            $totalOrders = ProductOrder::where('buyer_id', $user->id)->count();
-            $totalSpent = ProductOrder::where('buyer_id', $user->id)->sum('total_price');
-            $favoriteProducts = ProductOrder::where('buyer_id', $user->id)
-                ->select('product_id', DB::raw('COUNT(*) as order_count'))
-                ->groupBy('product_id')
-                ->orderByDesc('order_count')
-                ->with('product')
+            // Favorite farmers (most purchased from)
+            $favoriteFarmers = User::whereHas('farmProducts.orders', function ($q) use ($user) {
+                $q->where('buyer_id', $user->id);
+            })
+                ->withCount(['farmProducts as products_bought' => function ($q) use ($user) {
+                    $q->whereHas('orders', function ($subQ) use ($user) {
+                        $subQ->where('buyer_id', $user->id);
+                    });
+                }])
+                ->with(['farmProducts' => function ($q) use ($user) {
+                    $q->whereHas('orders', function ($subQ) use ($user) {
+                        $subQ->where('buyer_id', $user->id);
+                    })->with('orders');
+                }])
+                ->get()
+                ->map(function ($farmer) use ($user) {
+                    $totalSpent = 0;
+                    foreach ($farmer->farmProducts as $product) {
+                        $totalSpent += $product->orders()->where('buyer_id', $user->id)->sum('total_price');
+                    }
+                    $farmer->total_spent = $totalSpent;
+                    return $farmer;
+                })
+                ->where('total_spent', '>', 0)
+                ->sortByDesc('total_spent')
+                ->take(10);
+
+
+            // Recent orders for activity
+            $recentOrders = ProductOrder::where('buyer_id', $user->id)
+                ->with(['product.farmer'])
+                ->latest()
                 ->take(5)
                 ->get();
 
-            return view('dashboard', compact(
+            // Category spending breakdown
+            $categorySpending = ProductOrder::where('buyer_id', $user->id)
+                ->join('farm_products', 'product_orders.product_id', '=', 'farm_products.id')
+                ->join('farm_product_categories', 'farm_products.category_id', '=', 'farm_product_categories.id')
+                ->select('farm_product_categories.name as category_name', DB::raw('SUM(product_orders.total_price) as total_spent'))
+                ->groupBy('farm_product_categories.id', 'farm_product_categories.name')
+                ->orderByDesc('total_spent')
+                ->take(5)
+                ->get();
+
+            return view('buyer-dashboard', compact(
                 'orders',
                 'totalOrders',
                 'totalSpent',
-                'favoriteProducts'
+                'averageOrderValue',
+                'pendingOrders',
+                'completedOrders',
+                'processingOrders',
+                'cancelledOrders',
+                'totalFarmers',
+                'monthlyLabels',
+                'monthlyData',
+                'weeklyLabels',
+                'weeklyData',
+                'topProducts',
+                'favoriteFarmers',
+                'recentOrders',
+                'categorySpending'
             ));
         }
     }

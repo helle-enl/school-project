@@ -2,20 +2,37 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FarmProductController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductOrderController;
 use App\Http\Controllers\ProfileController;
 use App\Models\FarmProduct;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/search-products', [HomeController::class, 'searchProducts']);
+Route::get('/farmers-by-location', [HomeController::class, 'getFarmersByLocation']);
+Route::get('/products', [HomeController::class, 'allProducts'])->name('products');
+Route::get('/product/{id}', [HomeController::class, 'viewProduct'])->name('product.show');
+Route::get('/product/{id}', [HomeController::class, 'viewProduct'])->name('product.show');
+Route::post('/create-order', [ProductOrderController::class, 'store'])->name('orders.store')->middleware('auth');
+Route::get('/farmer/{id}', [HomeController::class, 'viewFarmer'])->name('farmer.show');
 
 // Dashboard routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
     Route::get('/dashboard/export', [DashboardController::class, 'exportData'])->name('dashboard.export');
+});
+
+
+// Buyer Order Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/my-orders', [ProductOrderController::class, 'buyerIndex'])->name('buyer.orders.index');
+    Route::get('/my-order/{order}', [ProductOrderController::class, 'buyerShow'])->name('buyer.orders.show');
+    Route::patch('/my-order/{order}/cancel', [ProductOrderController::class, 'buyerCancel'])->name('buyer.orders.cancel');
 });
 
 

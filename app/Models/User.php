@@ -115,4 +115,15 @@ class User extends Authenticatable
             'buyer_id'    // Foreign key on ProductOrder for buyer
         );
     }
+
+
+    public function farmerOrders()
+    {
+        return $this->hasMany(ProductOrder::class, 'farmer_id');
+    }
+
+    public function buyerOrders()
+    {
+        return $this->hasMany(ProductOrder::class, 'buyer_id');
+    }
 }

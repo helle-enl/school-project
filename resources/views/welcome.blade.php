@@ -576,6 +576,90 @@
                 transform: translateY(0);
             }
         }
+
+        .product-farmer {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .farmer-stats {
+            margin-bottom: 15px;
+        }
+
+        .farmer-stats .stat {
+            background: rgba(76, 175, 80, 0.1);
+            color: #2E7D32;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .farmer-location {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .farmer-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .error {
+            text-align: center;
+            color: #ef4444;
+            padding: 40px;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        @media (max-width: 480px) {
+            .nav-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            .product-card,
+            .farmer-card {
+                margin: 0 10px;
+            }
+
+            .hero-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .stat-card {
+                padding: 30px 15px;
+            }
+        }
     </style>
 </head>
 
@@ -595,15 +679,24 @@
                 </button>
             </div>
 
+
+
             <div class="nav-actions">
-                <a href="{{ route('login') }}" class="nav-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Login
-                </a>
-                <a href="#" class="nav-btn primary">
-                    <i class="fas fa-user-plus"></i>
-                    Sign Up
-                </a>
+                @auth
+                    <a href="{{ route('dashboard') }}" class="nav-btn">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="nav-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </a>
+                    <a href="{{ route('register') }}" class="nav-btn primary">
+                        <i class="fas fa-user-plus"></i>
+                        Sign Up
+                    </a>
+                @endauth
             </div>
         </div>
     </nav>
@@ -615,22 +708,23 @@
             <p>The premier marketplace for premium cash crops in Nigeria. Buy directly from farmers or sell your harvest
                 at fair prices.</p>
             <div class="hero-buttons">
-                <a href="#products" class="hero-btn primary">
+                <a href="{{ route('register', ['role' => 'buyer']) }}" class="hero-btn primary">
                     <i class="fas fa-shopping-cart"></i>
                     Start Buying
                 </a>
-                <a href="#farmers" class="hero-btn secondary">
+                <a href="{{ route('register', ['role' => 'farmer']) }}" class="hero-btn secondary">
                     <i class="fas fa-user-tie"></i>
                     Become a Seller
                 </a>
             </div>
+
         </div>
     </section>
 
     <!-- Statistics Section -->
     <section class="stats-section">
         <div class="container">
-            <div class="stats-grid">
+            {{-- <div class="stats-grid">
                 <div class="stat-card fade-in">
                     <div class="stat-icon">
                         <i class="fas fa-users"></i>
@@ -659,7 +753,38 @@
                     <div class="stat-number" id="locations-count">36</div>
                     <div class="stat-label">States Covered</div>
                 </div>
+            </div> --}}
+            <div class="stats-grid">
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number">{{ number_format($stats['farmers_count']) }}+</div>
+                    <div class="stat-label">Registered Farmers</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <div class="stat-number">{{ number_format($stats['products_count']) }}+</div>
+                    <div class="stat-label">Products Listed</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="stat-number">{{ number_format($stats['transactions_count']) }}+</div>
+                    <div class="stat-label">Successful Transactions</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="stat-number">{{ $stats['locations_count'] }}</div>
+                    <div class="stat-label">Locations Covered</div>
+                </div>
             </div>
+
         </div>
     </section>
 
@@ -673,11 +798,40 @@
             </div>
 
             <div class="products-grid" id="products-grid">
-                <!-- Products will be loaded dynamically -->
+                @foreach ($mostSellingProducts as $product)
+                    <div class="product-card">
+                        <div class="product-image">
+                            @if ($product->product_image)
+                                <img src="{{ asset('product_images/' . $product->product_image) }}"
+                                    alt="{{ $product->name }}">
+                            @endif
+                            <div class="product-badge">Best Seller</div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">{{ $product->name }}</h3>
+                            <div class="product-price">
+                                ₦{{ number_format($product->selling_price ?? $product->unit_price) }}/{{ $product->unit_of_measurement }}
+                            </div>
+                            <div class="product-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ $product->farmer->farm_location ?? 'Location not specified' }}
+                            </div>
+                            <div class="product-farmer">
+                                <i class="fas fa-user"></i>
+                                {{ $product->farmer->farm_name ?? $product->farmer->first_name . ' ' . $product->farmer->last_name }}
+                            </div>
+                            <button class="product-btn" onclick="viewProduct({{ $product->id }})">
+
+                                View Product
+                            </button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
+
             <div style="text-align: center;">
-                <a href="#" class="hero-btn primary">
+                <a href="{{ route('products') }}" class="hero-btn primary">
                     <i class="fas fa-eye"></i>
                     View All Products
                 </a>
@@ -694,17 +848,42 @@
             </div>
 
             <div class="location-tabs" id="location-tabs">
-                <div class="location-tab active" data-location="lagos">Lagos</div>
-                <div class="location-tab" data-location="kano">Kano</div>
-                <div class="location-tab" data-location="ogun">Ogun</div>
-                <div class="location-tab" data-location="kaduna">Kaduna</div>
-                <div class="location-tab" data-location="cross-river">Cross River</div>
-                <div class="location-tab" data-location="ondo">Ondo</div>
+                <div class="location-tab active" data-location="all">All Locations</div>
+                @foreach ($locations->take(6) as $location)
+                    <div class="location-tab" data-location="{{ $location }}">{{ $location }}</div>
+                @endforeach
             </div>
 
             <div class="farmers-grid" id="farmers-grid">
-                <!-- Farmers will be loaded dynamically -->
+                @foreach ($featuredFarmers as $farmer)
+                    <div class="farmer-card">
+                        <div class="farmer-avatar">
+                            @if ($farmer->profile_photo)
+                                <img src="{{ asset('profile_pictures/' . $farmer->profile_picture) }}"
+                                    alt="{{ $farmer->first_name }}">
+                            @else
+                                <i class="fas fa-user"></i>
+                            @endif
+                        </div>
+                        <h3 class="farmer-name">
+                            {{ $farmer->farm_name ?? $farmer->first_name . ' ' . $farmer->last_name }}</h3>
+                        <p class="farmer-speciality">
+                            {{ $farmer->farm_type ? ucfirst($farmer->farm_type) . ' Farming' : 'Mixed Farming' }}</p>
+                        <p class="farmer-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ $farmer->farm_location ?? 'Nigeria' }}
+                        </p>
+                        <div class="farmer-stats">
+                            <span class="stat">{{ $farmer->farm_products_count }} Products</span>
+                        </div>
+                        <button class="contact-farmer-btn" onclick="contactFarmer({{ $farmer->id }})">
+                            <i class="fas fa-phone"></i>
+                            View Farmer
+                        </button>
+                    </div>
+                @endforeach
             </div>
+
         </div>
     </section>
 
@@ -762,6 +941,185 @@
             </div>
         </div>
     </footer>
+    <script>
+        // Search functionality
+        document.querySelector('.search-btn').addEventListener('click', function() {
+            const query = document.querySelector('.search-input').value;
+            if (query.trim()) {
+                searchProducts(query);
+            }
+        });
+
+        document.querySelector('.search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value;
+                if (query.trim()) {
+                    searchProducts(query);
+                }
+            }
+        });
+
+        // Location tab functionality
+        document.querySelectorAll('.location-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const location = this.dataset.location;
+
+                // Update active tab
+                document.querySelectorAll('.location-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Load farmers by location
+                loadFarmersByLocation(location);
+            });
+        });
+
+        // Functions
+        function searchProducts(query) {
+            if (!query.trim()) {
+                alert('Please enter a search term');
+                return;
+            }
+
+            // Show loading state
+            const searchBtn = document.querySelector('.search-btn');
+            const originalContent = searchBtn.innerHTML;
+            searchBtn.innerHTML = '<div class="loading"></div>';
+
+            fetch(`/search-products?query=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Search failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // For now, redirect to a products page (you'll need to create this)
+                    window.location.href = `/products?search=${encodeURIComponent(query)}`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Search failed. Please try again.');
+                })
+                .finally(() => {
+                    searchBtn.innerHTML = originalContent;
+                });
+        }
+
+
+        function loadFarmersByLocation(location) {
+            const grid = document.getElementById('farmers-grid');
+            grid.innerHTML = '<div class="loading">Loading farmers...</div>';
+
+            fetch(`/farmers-by-location?location=${encodeURIComponent(location)}`)
+                .then(response => response.json())
+                .then(farmers => {
+                    let html = '';
+                    farmers.forEach(farmer => {
+                        html += `
+                    <div class="farmer-card">
+                        <div class="farmer-avatar">
+                            ${farmer.profile_photo ?
+                                `<img src="/storage/${farmer.profile_photo}" alt="${farmer.first_name}">` :
+                                '<i class="fas fa-user"></i>'
+                            }
+                        </div>
+                        <h3 class="farmer-name">${farmer.farm_name || farmer.first_name + ' ' + farmer.last_name}</h3>
+                        <p class="farmer-speciality">${farmer.farm_type ? farmer.farm_type.charAt(0).toUpperCase() + farmer.farm_type.slice(1) + ' Farming' : 'Mixed Farming'}</p>
+                        <p class="farmer-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${farmer.farm_location || 'Nigeria'}
+                        </p>
+                        <div class="farmer-stats">
+                            <span class="stat">${farmer.farm_products_count} Products</span>
+                        </div>
+                        <button class="contact-farmer-btn" onclick="contactFarmer(${farmer.id})">
+                            <i class="fas fa-phone"></i>
+                            View Farmer
+                        </button>
+                    </div>
+                `;
+                    });
+                    grid.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    grid.innerHTML = '<div class="error">Failed to load farmers</div>';
+                });
+        }
+
+        function contactFarmer(farmerId) {
+            // Check if user is logged in
+
+            // Redirect to farmer contact page or open contact modal
+            window.location.href = `/farmer/${farmerId}`;
+
+        }
+
+        function viewProduct(productId) {
+
+            window.location.href = `/product/${productId}`;
+
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Fade-in animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial fade-in state
+            document.querySelectorAll('.fade-in').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            });
+        });
+    </script>
+
+    @if (!isset($stats) || !isset($mostSellingProducts) || !isset($featuredFarmers) || !isset($locations))
+        <script>
+            // Fallback data for when controller data is not available
+            window.fallbackStats = {
+                farmers_count: 0,
+                products_count: 0,
+                transactions_count: 0,
+                locations_count: 0
+            };
+            window.fallbackProducts = [];
+            window.fallbackFarmers = [];
+            window.fallbackLocations = [];
+        </script>
+    @endif
+
 
 </body>
 

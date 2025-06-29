@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\ProductOrder;
 use App\Models\FarmProduct;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderConfirmationMail;
+use App\Mail\NewOrderNotificationMail;
+use App\Mail\OrderCancelledNotificationMail;
+use App\Models\User;
+
 
 class ProductOrderController extends Controller
 {
@@ -32,10 +38,20 @@ class ProductOrderController extends Controller
             'status' => 'pending',
         ]);
 
-        return response()->json([
-            'success' => true,
+        // Send confirmation email to buyer
+        Mail::to($order->buyer->email)->send(new OrderConfirmationMail($order));
+
+        // Send notification email to farmer
+        Mail::to($order->farmer->email)->send(new NewOrderNotificationMail($order));
+
+        return redirect()->route('dashboard')->with([
+            'success' => 'Your Order has been received and will be processed shortly',
             'data' => $order,
         ]);
+        // return response()->json([
+        //     'success' => true,
+        //     'data' => $order,
+        // ]);
     }
 
     public function productSales($productId)
@@ -102,5 +118,54 @@ class ProductOrderController extends Controller
 
         return redirect()->route('orders.index')
             ->with('success', 'Order deleted successfully');
+    }
+
+    /**
+     * Display buyer's orders
+     */
+    public function buyerIndex(Request $request)
+    {
+        $orders = ProductOrder::where('buyer_id', $request->user()->id)
+            ->with(['product.farmer', 'product.category'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('buyer.orders.index', compact('orders'));
+    }
+
+    /**
+     * Show specific order for buyer
+     */
+    public function buyerShow(Request $request, $id)
+    {
+        $order = ProductOrder::where('buyer_id', $request->user()->id)
+            ->where('id', $id)
+            ->with(['product.farmer', 'product.category'])
+            ->firstOrFail();
+
+        return view('buyer.orders.show', compact('order'));
+    }
+
+    /**
+     * Cancel order (buyer only)
+     */
+    public function buyerCancel(Request $request, $id)
+    {
+        $order = ProductOrder::where('buyer_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        // Only allow cancellation of pending or processing orders
+        if (!in_array($order->status, ['pending', 'processing'])) {
+            return redirect()->back()->with('error', 'This order cannot be cancelled.');
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        // Send notification email to farmer
+        Mail::to($order->farmer->email)->send(new OrderCancelledNotificationMail($order));
+
+        return redirect()->route('buyer.orders.index')
+            ->with('success', 'Order has been cancelled successfully.');
     }
 }
