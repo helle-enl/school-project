@@ -21,44 +21,78 @@ class DashboardController extends Controller
             $dateRange = $request->get('range', '30');
             $startDate = Carbon::now()->subDays($dateRange);
 
+            // $products = FarmProduct::with(['orders' => function ($query) use ($startDate) {
+            //     $query->where('created_at', '>=', $startDate);
+            // }, 'category'])
+            //     ->where('farmer_id', $user->id)
+            //     ->get();
+
             $products = FarmProduct::with(['orders' => function ($query) use ($startDate) {
-                $query->where('created_at', '>=', $startDate);
+                // Only include confirmed/completed orders for accurate calculations
+                $query->where('created_at', '>=', $startDate)
+                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
             }, 'category'])
                 ->where('farmer_id', $user->id)
                 ->get();
 
-            // Enhanced metrics calculation
+
+            // Enhanced metrics calculation with proper profit calculation
             $totalProducts = $products->count();
             $totalUnitsSold = 0;
             $totalSales = 0;
             $totalProfit = 0;
             $totalCost = 0;
+            $totalAvailableStock = 0;
 
             foreach ($products as $product) {
-                $unitsSold = $product->orders->sum('quantity');
-                $sales = $product->orders->sum('total_price');
-                $cost = $product->unit_price * $unitsSold;
+                // Only count confirmed/completed orders
+                $confirmedOrders = $product->orders;
+                $unitsSold = $confirmedOrders->sum('quantity');
+                $sales = $confirmedOrders->sum('total_price');
+
+                // Use unit_price as cost price (this is the farmer's cost)
+                $costPrice = $product->unit_price;
+                $sellingPrice = $product->selling_price ?? $product->unit_price;
+
+                // Calculate cost and profit correctly
+                $productCost = $costPrice * $unitsSold;
+                $productProfit = $sales - $productCost;
+
+                // Calculate available stock (total stock minus sold quantity)
+                $availableStock = max(0, $product->total_stock - $unitsSold);
 
                 $totalUnitsSold += $unitsSold;
                 $totalSales += $sales;
-                $totalCost += $cost;
-                $totalProfit += ($sales - $cost);
+                $totalCost += $productCost;
+                $totalProfit += $productProfit;
+                $totalAvailableStock += $availableStock;
             }
 
             // Calculate profit margin
             $profitMargin = $totalSales > 0 ? (($totalProfit / $totalSales) * 100) : 0;
 
-            // Get unique customers count
+
+            // Get unique customers count (only from confirmed orders)
             $totalCustomers = User::whereHas('orders', function ($query) use ($user, $startDate) {
                 $query->whereHas('product', function ($q) use ($user) {
                     $q->where('farmer_id', $user->id);
-                })->where('created_at', '>=', $startDate);
+                })
+                    ->where('created_at', '>=', $startDate)
+                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
             })->distinct()->count('id');
 
-            // Get average order value
-            $averageOrderValue = $totalCustomers > 0 ? $totalSales / $totalCustomers : 0;
+            // Get average order value (from confirmed orders only)
+            $totalOrderCount = ProductOrder::whereHas('product', function ($q) use ($user) {
+                $q->where('farmer_id', $user->id);
+            })
+                ->where('created_at', '>=', $startDate)
+                ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                ->count();
 
-            // Enhanced daily sales data
+            $averageOrderValue = $totalOrderCount > 0 ? $totalSales / $totalOrderCount : 0;
+
+
+            // Enhanced daily sales data (confirmed orders only)
             $dailyLabels = [];
             $dailyData = [];
             for ($i = 6; $i >= 0; $i--) {
@@ -66,12 +100,13 @@ class DashboardController extends Controller
                 $label = $date->format('D, M j');
                 $sales = ProductOrder::whereDate('created_at', $date)
                     ->whereHas('product', fn($q) => $q->where('farmer_id', $user->id))
+                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
                     ->sum('total_price');
                 $dailyLabels[] = $label;
                 $dailyData[] = floatval($sales);
             }
 
-            // Enhanced weekly sales data
+            // Enhanced weekly sales data (confirmed orders only)
             $weeklyLabels = [];
             $weeklyData = [];
             for ($i = 3; $i >= 0; $i--) {
@@ -80,35 +115,49 @@ class DashboardController extends Controller
                 $label = $start->format('M j') . ' - ' . $end->format('j');
                 $sales = ProductOrder::whereBetween('created_at', [$start, $end])
                     ->whereHas('product', fn($q) => $q->where('farmer_id', $user->id))
+                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
                     ->sum('total_price');
                 $weeklyLabels[] = $label;
                 $weeklyData[] = floatval($sales);
             }
 
-            // Top selling products with category information
+
+
+            // Top selling products with category information (confirmed orders only)
             $topSellingProducts = FarmProduct::where('farmer_id', $user->id)
                 ->with('category')
-                ->withSum('orders as units_sold', 'quantity')
-                ->withSum('orders as total_sales', 'total_price')
+                ->withSum(['orders as units_sold' => function ($query) {
+                    $query->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
+                }], 'quantity')
+                ->withSum(['orders as total_sales' => function ($query) {
+                    $query->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
+                }], 'total_price')
                 ->having('units_sold', '>', 0)
                 ->orderByDesc('units_sold')
                 ->take(10)
                 ->get();
 
-            // Top customers with detailed information
+
+            // Top customers with detailed information (confirmed orders only)
             $topCustomers = User::whereHas('orders.product', function ($q) use ($user) {
                 $q->where('farmer_id', $user->id);
             })
+                ->whereHas('orders', function ($q) {
+                    $q->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
+                })
                 ->withCount(['orders as order_count' => function ($q) use ($user) {
-                    $q->whereHas('product', fn($q2) => $q2->where('farmer_id', $user->id));
+                    $q->whereHas('product', fn($q2) => $q2->where('farmer_id', $user->id))
+                        ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
                 }])
                 ->withSum(['orders as total_spent' => function ($q) use ($user) {
-                    $q->whereHas('product', fn($q2) => $q2->where('farmer_id', $user->id));
+                    $q->whereHas('product', fn($q2) => $q2->where('farmer_id', $user->id))
+                        ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
                 }], 'total_price')
                 ->having('total_spent', '>', 0)
                 ->orderByDesc('total_spent')
                 ->take(10)
                 ->get();
+
 
             // Recent orders for activity feed
             $recentOrders = ProductOrder::whereHas('product', function ($q) use ($user) {
@@ -119,13 +168,23 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            // Low stock alerts
+            // Low stock alerts - calculate available stock properly
             $lowStockProducts = FarmProduct::where('farmer_id', $user->id)
-                ->where('total_stock', '<=', 10)
-                ->where('total_stock', '>', 0)
-                ->orderBy('total_stock')
-                ->take(5)
-                ->get();
+                ->get()
+                ->map(function ($product) {
+                    $soldQuantity = $product->orders()
+                        ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                        ->sum('quantity');
+                    $availableStock = max(0, $product->total_stock - $soldQuantity);
+                    $product->available_stock = $availableStock;
+                    return $product;
+                })
+                ->filter(function ($product) {
+                    return $product->available_stock <= 10 && $product->available_stock > 0;
+                })
+                ->sortBy('available_stock')
+                ->take(5);
+
 
             return view('farmer-dashboard', compact(
                 'products',
@@ -137,6 +196,7 @@ class DashboardController extends Controller
                 'profitMargin',
                 'totalCustomers',
                 'averageOrderValue',
+                'totalAvailableStock',  // Add this new variable
                 'dailyLabels',
                 'dailyData',
                 'weeklyLabels',
@@ -297,6 +357,7 @@ class DashboardController extends Controller
                 $labels[] = $date->format('M j');
                 $sales = ProductOrder::whereDate('created_at', $date)
                     ->whereHas('product', fn($q) => $q->where('farmer_id', $user->id))
+                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
                     ->sum('total_price');
                 $data[] = floatval($sales);
             }
@@ -308,6 +369,7 @@ class DashboardController extends Controller
                 $labels[] = $start->format('M j') . ' - ' . $end->format('j');
                 $sales = ProductOrder::whereBetween('created_at', [$start, $end])
                     ->whereHas('product', fn($q) => $q->where('farmer_id', $user->id))
+                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
                     ->sum('total_price');
                 $data[] = floatval($sales);
             }
@@ -319,6 +381,7 @@ class DashboardController extends Controller
             'period' => $period
         ]);
     }
+
 
     /**
      * Export dashboard data to CSV

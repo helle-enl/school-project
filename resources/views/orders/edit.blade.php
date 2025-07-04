@@ -592,8 +592,8 @@
                                 </option>
                                 <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered
                                 </option>
-                                <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>Completed
-                                </option>
+                                {{-- <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>Completed
+                                </option> --}}
                                 <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled
                                 </option>
                             </select>
@@ -701,10 +701,10 @@
                                 <i class="fas fa-play"></i>
                                 Mark as Processing
                             </button>
-                            <button type="button" class="btn btn-secondary" onclick="setStatus('completed')"
+                            <button type="button" class="btn btn-secondary" onclick="setStatus('delivered')"
                                 style="font-size: 0.9rem; padding: 10px;">
                                 <i class="fas fa-check"></i>
-                                Mark as Completed
+                                Mark as Delivered
                             </button>
                             <button type="button" class="btn btn-secondary" onclick="duplicateOrder()"
                                 style="font-size: 0.9rem; padding: 10px;">

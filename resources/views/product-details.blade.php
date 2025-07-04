@@ -592,11 +592,25 @@
                                 per {{ $product->unit_of_measurement }}
                             </span>
                         </div>
+                        @php
+                            // Calculate available stock
+                            $soldQuantity = $product
+                                ->orders()
+                                ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                                ->sum('quantity');
+                            $availableStock = max(0, $product->total_stock - $soldQuantity);
+                        @endphp
 
                         <div class="product-meta">
                             <div class="meta-item">
                                 <i class="fas fa-box"></i>
-                                <span>Stock: {{ $product->total_stock ?? 'Available' }}</span>
+                                <span>
+                                    @if ($availableStock > 0)
+                                        Stock: {{ $availableStock }} available
+                                    @else
+                                        <span style="color: #f44336; font-weight: 600;">Sold Out</span>
+                                    @endif
+                                </span>
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-tag"></i>
@@ -654,65 +668,79 @@
             <!-- Order Section -->
             @auth
                 @if (auth()->user()->role === 'buyer')
-                    <div class="order-section">
-                        <h2 class="order-title">
-                            <i class="fas fa-shopping-cart"></i> Place Your Order
-                        </h2>
+                    @if ($availableStock > 0)
+                        <div class="order-section">
+                            <h2 class="order-title">
+                                <i class="fas fa-shopping-cart"></i> Place Your Order
+                            </h2>
 
-                        <form class="order-form" id="orderForm" action="{{ route('orders.store') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="hidden" name="buyer_id" value="{{ auth()->id() }}">
+                            <form class="order-form" id="orderForm" action="{{ route('orders.store') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                <input type="hidden" name="buyer_id" value="{{ auth()->id() }}">
 
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-sort-numeric-up"></i> Quantity
-                                </label>
-                                <div class="quantity-controls">
-                                    <button type="button" class="quantity-btn" onclick="decreaseQuantity()">-</button>
-                                    <input type="number" class="form-input quantity-input" name="quantity" id="quantity"
-                                        value="1" min="1" max="{{ $product->total_stock ?? 999 }}"
-                                        onchange="updateTotal()">
-                                    <button type="button" class="quantity-btn" onclick="increaseQuantity()">+</button>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sort-numeric-up"></i> Quantity
+                                    </label>
+                                    <div class="quantity-controls">
+                                        <button type="button" class="quantity-btn" onclick="decreaseQuantity()">-</button>
+                                        <input type="number" class="form-input quantity-input" name="quantity"
+                                            id="quantity" value="1" min="1" max="{{ $availableStock }}"
+                                            onchange="updateTotal()">
+                                        <button type="button" class="quantity-btn" onclick="increaseQuantity()">+</button>
+                                    </div>
+                                    <small style="color: #666; margin-top: 5px; display: block;">
+                                        Maximum available: {{ $availableStock }} {{ $product->unit_of_measurement }}
+                                    </small>
                                 </div>
-                            </div>
 
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-map-marker-alt"></i> Shipping Address
-                                </label>
-                                <textarea class="form-input" name="shipping_address" rows="3" placeholder="Enter your delivery address..."
-                                    required></textarea>
-                            </div>
 
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-sticky-note"></i> Additional Notes (Optional)
-                                </label>
-                                <textarea class="form-input" name="note" rows="2" placeholder="Any special requests or notes..."></textarea>
-                            </div>
-
-                            <div class="price-summary">
-                                <div class="price-row">
-                                    <span>Unit Price:</span>
-                                    <span>₦{{ number_format($product->selling_price ?? $product->unit_price) }}</span>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-map-marker-alt"></i> Shipping Address
+                                    </label>
+                                    <textarea class="form-input" name="shipping_address" rows="3" placeholder="Enter your delivery address..."
+                                        required></textarea>
                                 </div>
-                                <div class="price-row">
-                                    <span>Quantity:</span>
-                                    <span id="summaryQuantity">1</span>
-                                </div>
-                                <div class="price-row total">
-                                    <span>Total Amount:</span>
-                                    <span
-                                        id="totalAmount">₦{{ number_format($product->selling_price ?? $product->unit_price) }}</span>
-                                </div>
-                            </div>
 
-                            <button type="submit" class="order-btn" id="orderButton">
-                                <i class="fas fa-check-circle"></i> Place Order Now
-                            </button>
-                        </form>
-                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sticky-note"></i> Additional Notes (Optional)
+                                    </label>
+                                    <textarea class="form-input" name="note" rows="2" placeholder="Any special requests or notes..."></textarea>
+                                </div>
+
+                                <div class="price-summary">
+                                    <div class="price-row">
+                                        <span>Unit Price:</span>
+                                        <span>₦{{ number_format($product->selling_price ?? $product->unit_price) }}</span>
+                                    </div>
+                                    <div class="price-row">
+                                        <span>Quantity:</span>
+                                        <span id="summaryQuantity">1</span>
+                                    </div>
+                                    <div class="price-row total">
+                                        <span>Total Amount:</span>
+                                        <span
+                                            id="totalAmount">₦{{ number_format($product->selling_price ?? $product->unit_price) }}</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="order-btn" id="orderButton">
+                                    <i class="fas fa-check-circle"></i> Place Order Now
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <div class="login-required">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Product Sold Out</h3>
+                            <p>This product is currently out of stock. Please check back later or contact the farmer
+                                directly.</p>
+                            <p style="color: #666;">Farmer: {{ $product->farmer->first_name }}
+                                {{ $product->farmer->last_name }}</p>
+                        </div>
+                    @endif
                 @else
                     <div class="login-required">
                         <h3><i class="fas fa-user-shield"></i> Farmer Account Detected</h3>
@@ -782,7 +810,7 @@
     <!-- JavaScript -->
     <script>
         const unitPrice = {{ $product->selling_price ?? $product->unit_price }};
-        const maxStock = {{ $product->total_stock ?? 999 }};
+        const maxStock = {{ $availableStock }};
 
         function updateTotal() {
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
@@ -792,11 +820,24 @@
             document.getElementById('summaryQuantity').textContent = quantity;
             document.getElementById('totalAmount').textContent = '₦' + total.toLocaleString();
 
-            // Validate quantity
+            // Validate quantity against available stock
             if (quantity > maxStock) {
                 document.getElementById('quantity').value = maxStock;
                 updateTotal();
-                alert(`Maximum available stock is ${maxStock}`);
+                alert(`Only ${maxStock} units available in stock`);
+            }
+
+            // Update order button state
+            const orderButton = document.getElementById('orderButton');
+            if (maxStock <= 0) {
+                orderButton.disabled = true;
+                orderButton.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
+            } else if (quantity > maxStock) {
+                orderButton.disabled = true;
+                orderButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Insufficient Stock';
+            } else {
+                orderButton.disabled = false;
+                orderButton.innerHTML = '<i class="fas fa-check-circle"></i> Place Order Now';
             }
         }
 
@@ -807,7 +848,7 @@
                 quantityInput.value = currentValue + 1;
                 updateTotal();
             } else {
-                alert(`Maximum available stock is ${maxStock}`);
+                alert(`Only ${maxStock} units available in stock`);
             }
         }
 
@@ -820,8 +861,23 @@
             }
         }
 
-        // Form submission with loading state
+        // Form submission validation
         document.getElementById('orderForm')?.addEventListener('submit', function(e) {
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+
+            if (quantity > maxStock) {
+                e.preventDefault();
+                alert(`Sorry, only ${maxStock} units are available in stock.`);
+                return false;
+            }
+
+            if (maxStock <= 0) {
+                e.preventDefault();
+                alert('This product is currently sold out.');
+                return false;
+            }
+
+            // Continue with form submission
             const orderButton = document.getElementById('orderButton');
             const originalText = orderButton.innerHTML;
 
@@ -835,7 +891,7 @@
             }, 5000);
         });
 
-        // Initialize total on page load
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateTotal();
         });
@@ -852,6 +908,69 @@
         document.querySelector('.product-image')?.addEventListener('click', function() {
             // You can implement image modal/lightbox here if needed
             console.log('Image clicked - implement lightbox if needed');
+        });
+
+        // Real-time stock checking
+        function checkStockAvailability() {
+            fetch(`/farm-products/{{ $product->id }}/stock`)
+                .then(response => response.json())
+                .then(data => {
+                    const maxStock = data.available_stock;
+                    const quantityInput = document.getElementById('quantity');
+                    const orderButton = document.getElementById('orderButton');
+                    const stockDisplay = document.querySelector('.stock-display');
+
+                    // Update max stock value
+                    if (quantityInput) {
+                        quantityInput.max = maxStock;
+
+                        // Adjust current quantity if it exceeds available stock
+                        if (parseInt(quantityInput.value) > maxStock) {
+                            quantityInput.value = Math.max(1, maxStock);
+                            updateTotal();
+                        }
+                    }
+
+                    // Update stock display
+                    if (stockDisplay) {
+                        if (maxStock > 0) {
+                            stockDisplay.innerHTML = `<i class="fas fa-box"></i> Stock: ${maxStock} available`;
+                            stockDisplay.style.color = '#4CAF50';
+                        } else {
+                            stockDisplay.innerHTML = `<i class="fas fa-times-circle"></i> Sold Out`;
+                            stockDisplay.style.color = '#f44336';
+                        }
+                    }
+
+                    // Update order button
+                    if (orderButton) {
+                        if (maxStock <= 0) {
+                            orderButton.disabled = true;
+                            orderButton.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
+                            orderButton.style.background = '#f44336';
+                        } else {
+                            orderButton.disabled = false;
+                            orderButton.innerHTML = '<i class="fas fa-check-circle"></i> Place Order Now';
+                            orderButton.style.background = '';
+                        }
+                    }
+
+                    // Update global maxStock variable
+                    window.maxStock = maxStock;
+                })
+                .catch(error => {
+                    console.error('Error checking stock:', error);
+                });
+        }
+
+        // Check stock every 30 seconds
+        setInterval(checkStockAvailability, 30000);
+
+        // Check stock when page becomes visible (user switches back to tab)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                checkStockAvailability();
+            }
         });
     </script>
 </body>

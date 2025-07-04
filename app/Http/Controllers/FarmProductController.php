@@ -128,9 +128,19 @@ class FarmProductController extends Controller
      */
     public function show(Request $request, FarmProduct $farmProduct): View
     {
+        // Calculate available stock
+        $soldQuantity = $farmProduct->orders()
+            ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+            ->sum('quantity');
+        $availableStock = max(0, $farmProduct->total_stock - $soldQuantity);
+
         // Basic sales data
-        $totalUnitsSold = $farmProduct->orders->sum('quantity');
-        $totalSales = $farmProduct->orders->sum('total_price');
+        $totalUnitsSold = $soldQuantity;
+        $totalSales = $farmProduct->orders->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])->sum('total_price');
+
+        // Basic sales data
+        // $totalUnitsSold = $farmProduct->orders->sum('quantity');
+        // $totalSales = $farmProduct->orders->sum('total_price');
         $totalRevenue = $totalSales; // Alias for consistency
         $totalCost = $farmProduct->unit_price * $totalUnitsSold;
         $totalProfit = ($totalSales - $totalCost);
@@ -251,6 +261,9 @@ class FarmProductController extends Controller
 
         return view("farm-products.show")->with([
             'product' => $farmProduct,
+            'availableStock' => $availableStock,
+            'isInStock' => $availableStock > 0,
+
             'categories' => FarmProductCategory::where('farmer_id', $request->user()->id)->get(),
 
             // Basic metrics
@@ -657,5 +670,69 @@ class FarmProductController extends Controller
                 'message' => 'Failed to duplicate product: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Calculate available stock based on orders
+     */
+    private function getAvailableStock(FarmProduct $product)
+    {
+        // Get total sold quantity from confirmed/completed orders
+        $soldQuantity = $product->orders()
+            ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+            ->sum('quantity');
+
+        // Calculate available stock
+        $availableStock = $product->total_stock - $soldQuantity;
+
+        return max(0, $availableStock); // Ensure it's never negative
+    }
+
+    /**
+     * Check if product is in stock
+     */
+    private function isInStock(FarmProduct $product, $requestedQuantity = 1)
+    {
+        return $this->getAvailableStock($product) >= $requestedQuantity;
+    }
+
+    /**
+     * Validate stock before order creation
+     */
+    public function validateStock(Request $request)
+    {
+        $product = FarmProduct::findOrFail($request->product_id);
+        $requestedQuantity = $request->quantity;
+
+        $availableStock = $this->getAvailableStock($product);
+
+        if ($availableStock < $requestedQuantity) {
+            return response()->json([
+                'success' => false,
+                'message' => "Only {$availableStock} units available in stock",
+                'available_stock' => $availableStock
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'available_stock' => $availableStock
+        ]);
+    }
+
+    /**
+     * Get real-time stock for AJAX requests
+     */
+    public function getStock(FarmProduct $farmProduct)
+    {
+        $availableStock = $this->getAvailableStock($farmProduct);
+
+        return response()->json([
+            'product_id' => $farmProduct->id,
+            'total_stock' => $farmProduct->total_stock,
+            'available_stock' => $availableStock,
+            'is_in_stock' => $availableStock > 0,
+            'status' => $availableStock > 0 ? 'available' : 'sold_out'
+        ]);
     }
 }

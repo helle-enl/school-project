@@ -101,7 +101,7 @@ class ProductOrderController extends Controller
             'tracking_number' => 'nullable|string',
             'shipping_address' => 'nullable|string',
             'quantity' => 'required|integer|min:1',
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,processing,shipped,delivered,cancelled,completed',
         ]);
 
         $order = ProductOrder::findOrFail($id);

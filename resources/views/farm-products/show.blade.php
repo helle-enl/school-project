@@ -64,8 +64,6 @@
 @section('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-       
-
         .product-detail-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -898,17 +896,20 @@
         @php
             $stockLevel = 'high';
             $stockMessage = 'Stock level is healthy';
-            if ($product->total_stock <= 0) {
+            $availableStock = $availableStock ?? 0;
+
+            if ($availableStock <= 0) {
                 $stockLevel = 'low';
-                $stockMessage = 'Product is out of stock! Restock immediately.';
-            } elseif ($product->total_stock <= 10) {
+                $stockMessage = 'Product is sold out! Add more stock to continue selling.';
+            } elseif ($availableStock <= 5) {
                 $stockLevel = 'low';
-                $stockMessage = 'Low stock alert! Consider restocking soon.';
-            } elseif ($product->total_stock <= 50) {
+                $stockMessage = 'Very low stock alert! Only ' . $availableStock . ' units remaining.';
+            } elseif ($availableStock <= 20) {
                 $stockLevel = 'medium';
-                $stockMessage = 'Stock level is moderate. Monitor closely.';
+                $stockMessage = 'Low stock alert! Only ' . $availableStock . ' units remaining.';
             }
         @endphp
+
 
         @if ($stockLevel !== 'high')
             <div class="stock-alert {{ $stockLevel }}">
@@ -987,16 +988,17 @@
 
                     <div class="kpi-card">
                         <div class="kpi-icon">
-                            <i class="fas fa-star"></i>
+                            <i class="fas fa-boxes"></i>
                         </div>
-                        <div class="kpi-value">{{ number_format($averageRating, 1) }}</div>
-                        <div class="kpi-label">Avg Rating</div>
+                        <div class="kpi-value">{{ $availableStock ?? 0 }}</div>
+                        <div class="kpi-label">Available Stock</div>
                         <div
-                            class="kpi-trend trend-{{ ($averageRating >= 4 ? 'up' : $averageRating >= 3) ? 'neutral' : 'down' }}">
-                            <i class="fas fa-star"></i>
-                            <span>{{ $totalReviews }} reviews</span>
+                            class="kpi-trend trend-{{ $availableStock > 10 ? 'up' : ($availableStock > 0 ? 'neutral' : 'down') }}">
+                            <i class="fas fa-warehouse"></i>
+                            <span>{{ $availableStock > 10 ? 'Good' : ($availableStock > 0 ? 'Low' : 'Sold Out') }}</span>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Sales Chart -->
@@ -1082,15 +1084,15 @@
 
                     <div class="inventory-details">
                         <div class="inventory-item">
-                            <div class="inventory-number">{{ $product->total_stock }}</div>
+                            <div class="inventory-number"> {{ $availableStock ?? 0 }} </div>
                             <div class="inventory-label">Current Stock</div>
                         </div>
                         <div class="inventory-item">
-                            <div class="inventory-number">{{ $initialStock ?? 'N/A' }}</div>
+                            <div class="inventory-number">{{ $product->total_stock }}</div>
                             <div class="inventory-label">Initial Stock</div>
                         </div>
                         <div class="inventory-item">
-                            <div class="inventory-number">{{ $reorderLevel ?? 10 }}</div>
+                            <div class="inventory-number">{{ $reorderLevel ?? 0 }}</div>
                             <div class="inventory-label">Reorder Level</div>
                         </div>
                         <div class="inventory-item">

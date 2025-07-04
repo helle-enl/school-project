@@ -46,11 +46,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/farm-products', [FarmProductController::class, 'index'])->name('farm-products.index');
     Route::get('/farm-products/new', [FarmProductController::class, 'create'])->name('farm-products.create');
     Route::post('/farm-products', [FarmProductController::class, 'store'])->name('farm-products.store');
+    Route::post('/farm-products/{farmProduct}/validate-stock', [FarmProductController::class, 'validateStock'])
+        ->name('farm-products.validate-stock');
     Route::get('/farm-products/{farmProduct}', [FarmProductController::class, 'show'])->name('farm-products.show');
     Route::get('/farm-products/{farmProduct}/edit', [FarmProductController::class, 'edit'])->name('farm-products.edit');
+    Route::get('/farm-products/{farmProduct}/stock', [FarmProductController::class, 'getStock'])
+        ->name('farm-products.get-stock');
     Route::patch('/farm-products/{farmProduct}', [FarmProductController::class, 'update'])->name('farm-products.update');
     Route::delete('/farm-products', [FarmProductController::class, 'destroy'])->name('farm-products.destroy');
     //End Farm Products Routes
+
 
 
     // Product detail API routes

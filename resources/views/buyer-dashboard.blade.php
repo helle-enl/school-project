@@ -1273,298 +1273,264 @@
 @endsection
 @section('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Order Status Pie Chart
-        // Order Status Pie Chart
-        const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
-        const orderStatusChart = new Chart(orderStatusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pending', 'Processing', 'Delivered', 'Cancelled'],
-                datasets: [{
-                    data: [{{ $pendingOrders }}, {{ $processingOrders }}, {{ $completedOrders }},
-                        {{ $cancelledOrders }}
-                    ],
-                    backgroundColor: [
-                        '#f39c12',
-                        '#3498db',
-                        '#4CAF50',
-                        '#e74c3c'
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                // ... existing options
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(46, 125, 50, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4CAF50',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        // ... rest of tooltip config
-                    }
-                }
-            }
-        });
 
-        // Monthly Spending Chart
-        const monthlySpendingChart = new Chart(monthlySpendingCtx, {
-            // ... existing config
-            data: {
-                datasets: [{
-                    backgroundColor: function(context) {
-                        const chart = context.chart;
-                        const {
-                            ctx,
-                            chartArea
-                        } = chart;
-                        if (!chartArea) {
-                            return null;
-                        }
-                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea
-                            .top);
-                        gradient.addColorStop(0, 'rgba(76, 175, 80, 0.1)');
-                        gradient.addColorStop(1, 'rgba(76, 175, 80, 0.8)');
-                        return gradient;
-                    },
-                    borderColor: '#4CAF50',
-                    // ... rest of config
-                }]
-            },
-            options: {
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(46, 125, 50, 0.9)',
-                        borderColor: '#4CAF50',
-                        // ... rest of tooltip config
-                    }
-                }
-            }
-        });
-
-        // Weekly Spending Chart
-        const weeklySpendingChart = new Chart(weeklySpendingCtx, {
-            // ... existing config
-            data: {
-                datasets: [{
-                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                    borderColor: '#4CAF50',
-                    pointBackgroundColor: '#4CAF50',
-                    // ... rest of config
-                }]
-            },
-            options: {
-                plugins: {
-                    tooltip: {
-                        backgroundColor: 'rgba(46, 125, 50, 0.9)',
-                        borderColor: '#4CAF50',
-                        // ... rest of tooltip config
-                    }
-                }
-            }
-        });
-
-
-        // Monthly Spending Chart
-        const monthlySpendingCtx = document.getElementById('monthlySpendingChart').getContext('2d');
-        const monthlySpendingChart = new Chart(monthlySpendingCtx, {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($monthlyLabels) !!},
-                datasets: [{
-                    label: 'Monthly Spending (₦)',
-                    data: {!! json_encode($monthlyData) !!},
-                    backgroundColor: function(context) {
-                        const chart = context.chart;
-                        const {
-                            ctx,
-                            chartArea
-                        } = chart;
-                        if (!chartArea) {
-                            return null;
-                        }
-                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea
-                            .top);
-                        gradient.addColorStop(0, 'rgba(76, 175, 80, 0.1);');
-                        gradient.addColorStop(1, 'rgba(255, 107, 53, 0.8)');
-                        return gradient;
-                    },
-                    borderColor: '#4CAF50',
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            font: {
-                                weight: 'bold'
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 107, 53, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4CAF50',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return 'Spent: ₦' + context.parsed.y.toLocaleString();
-                            }
+<script>
+    // Order Status Pie Chart
+    const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+    const orderStatusChart = new Chart(orderStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Processing', 'Delivered', 'Cancelled'],
+            datasets: [{
+                data: [{{ $pendingOrders }}, {{ $processingOrders }}, {{ $completedOrders }}, {{ $cancelledOrders }}],
+                backgroundColor: [
+                    '#f39c12',
+                    '#3498db',
+                    '#4CAF50',
+                    '#e74c3c'
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        font: {
+                            weight: 'bold'
                         }
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return '₦' + value.toLocaleString();
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-
-        // Weekly Spending Chart
-        const weeklySpendingCtx = document.getElementById('weeklySpendingChart').getContext('2d');
-        const weeklySpendingChart = new Chart(weeklySpendingCtx, {
-            type: 'line',
-            data: {
-                labels: {!! json_encode($weeklyLabels) !!},
-                datasets: [{
-                    label: 'Daily Spending (₦)',
-                    data: {!! json_encode($weeklyData) !!},
-                    backgroundColor: 'rgba(76, 175, 80, 0.1);',
+                tooltip: {
+                    backgroundColor: 'rgba(46, 125, 50, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
                     borderColor: '#4CAF50',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#4CAF50',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            font: {
-                                weight: 'bold'
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 107, 53, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: '#4CAF50',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return 'Spent: ₦' + context.parsed.y.toLocaleString();
-                            }
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} orders (${percentage}%)`;
                         }
                     }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return '₦' + value.toLocaleString();
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
                 }
             }
-        });
+        }
+    });
 
-        // Animate numbers on page load
-        const animateNumbers = () => {
-            const numbers = document.querySelectorAll('.dashboard-box p');
-            numbers.forEach(number => {
-                const target = parseInt(number.textContent.replace(/[₦,]/g, ''));
-                if (target) {
-                    let current = 0;
-                    const increment = target / 50;
-                    const timer = setInterval(() => {
-                        current += increment;
-                        if (current >= target) {
-                            current = target;
-                            clearInterval(timer);
+    // Monthly Spending Chart
+    const monthlySpendingCtx = document.getElementById('monthlySpendingChart').getContext('2d');
+    const monthlySpendingChart = new Chart(monthlySpendingCtx, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($monthlyLabels) !!},
+            datasets: [{
+                label: 'Monthly Spending (₦)',
+                data: {!! json_encode($monthlyData) !!},
+                backgroundColor: function(context) {
+                    const chart = context.chart;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) {
+                        return null;
+                    }
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, 'rgba(76, 175, 80, 0.1)');
+                    gradient.addColorStop(1, 'rgba(76, 175, 80, 0.8)');
+                    return gradient;
+                },
+                borderColor: '#4CAF50',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        font: {
+                            weight: 'bold'
                         }
-                        if (number.textContent.includes('₦')) {
-                            number.textContent = '₦' + Math.floor(current).toLocaleString();
-                        } else {
-                            number.textContent = Math.floor(current).toLocaleString();
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(46, 125, 50, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#4CAF50',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Spent: ₦' + context.parsed.y.toLocaleString();
                         }
-                    }, 20);
+                    }
                 }
-            });
-        };
-
-        // Trigger number animation when dashboard boxes come into view
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    animateNumbers();
-                    observer.unobserve(entry.target);
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
                 }
-            });
-        });
+            }
+        }
+    });
 
-        document.querySelector('.dashboard-boxes') && observer.observe(document.querySelector('.dashboard-boxes'));
+    // Weekly Spending Chart
+    const weeklySpendingCtx = document.getElementById('weeklySpendingChart').getContext('2d');
+    const weeklySpendingChart = new Chart(weeklySpendingCtx, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($weeklyLabels) !!},
+            datasets: [{
+                label: 'Daily Spending (₦)',
+                data: {!! json_encode($weeklyData) !!},
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderColor: '#4CAF50',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#4CAF50',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(46, 125, 50, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#4CAF50',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Spent: ₦' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
 
-        // Add loading animation on page load
-        window.addEventListener('load', function() {
-            document.querySelectorAll('.loading-skeleton').forEach(el => {
-                el.classList.remove('loading-skeleton');
-            });
+    // Animate numbers on page load
+    const animateNumbers = () => {
+        const numbers = document.querySelectorAll('.dashboard-box p');
+        numbers.forEach(number => {
+            const target = parseInt(number.textContent.replace(/[₦,]/g, ''));
+            if (target && !isNaN(target)) {
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    if (number.textContent.includes('₦')) {
+                        number.textContent = '₦' + Math.floor(current).toLocaleString();
+                    } else {
+                        number.textContent = Math.floor(current).toLocaleString();
+                    }
+                }, 20);
+            }
         });
-    </script>
+    };
+
+    // Trigger number animation when dashboard boxes come into view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateNumbers();
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+
+    const dashboardBoxes = document.querySelector('.dashboard-boxes');
+    if (dashboardBoxes) {
+        observer.observe(dashboardBoxes);
+    }
+
+    // Add loading animation on page load
+    window.addEventListener('load', function() {
+        document.querySelectorAll('.loading-skeleton').forEach(el => {
+            el.classList.remove('loading-skeleton');
+        });
+    });
+
+    // Initialize charts after DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Charts are already initialized above
+        console.log('Buyer dashboard loaded successfully');
+    });
+</script>
+
 @endsection

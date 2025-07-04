@@ -769,6 +769,13 @@
                                 <i class="fas fa-money-bill-wave"></i>
                                 Pricing & Stock Information
                             </h3>
+                            @php
+                                $soldQuantity = $product
+                                    ->orders()
+                                    ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                                    ->sum('quantity');
+                                $availableStock = max(0, $product->total_stock - $soldQuantity);
+                            @endphp
 
                             <div class="pricing-grid">
                                 <div class="form-group">
@@ -820,7 +827,8 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group">
+
+                                {{-- <div class="form-group">
                                     <label for="total_stock" class="form-label">
                                         <i class="fas fa-boxes"></i>
                                         Available Stock
@@ -840,8 +848,55 @@
                                         <i class="fas fa-warehouse"></i>
                                         <span id="stock-unit">Number of units available for sale</span>
                                     </div>
+                                </div> --}}
+
+                                <div class="form-group">
+                                    <label for="total_stock" class="form-label">
+                                        <i class="fas fa-boxes"></i>
+                                        Total Stock Added
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="number" id="total_stock" name="total_stock"
+                                        class="form-input {{ $errors->has('total_stock') ? 'error' : '' }}"
+                                        value="{{ old('total_stock', $product->total_stock) }}" placeholder="0"
+                                        min="0" required />
+                                    @if ($errors->has('total_stock'))
+                                        <div class="error-message">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                            {{ $errors->first('total_stock') }}
+                                        </div>
+                                    @endif
+                                    <div class="helper-text">
+                                        <i class="fas fa-info-circle"></i>
+                                        <div style="margin-top: 5px;">
+                                            <strong>Stock Summary:</strong><br>
+                                            • Total Added: {{ $product->total_stock }} units<br>
+                                            • Units Sold: {{ $soldQuantity }} units<br>
+                                            • Available: <span
+                                                style="color: {{ $availableStock > 0 ? '#4CAF50' : '#f44336' }}; font-weight: 600;">{{ $availableStock }}
+                                                units</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            <!-- Stock Status Alert -->
+                            @if ($availableStock <= 0)
+                                <div
+                                    style="margin-top: 15px; padding: 15px; background: rgba(244, 67, 54, 0.1); border-radius: 8px; border-left: 4px solid #f44336;">
+                                    <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
+                                    <strong style="color: #c62828;">Product Sold Out!</strong>
+                                    <p style="color: #666; margin-top: 5px;">Add more stock to make this product available
+                                        for purchase again.</p>
+                                </div>
+                            @elseif($availableStock <= 5)
+                                <div
+                                    style="margin-top: 15px; padding: 15px; background: rgba(255, 152, 0, 0.1); border-radius: 8px; border-left: 4px solid #ff9800;">
+                                    <i class="fas fa-exclamation-circle" style="color: #ff9800;"></i>
+                                    <strong style="color: #f57c00;">Low Stock Alert!</strong>
+                                    <p style="color: #666; margin-top: 5px;">Only {{ $availableStock }} units remaining.
+                                        Consider adding more stock.</p>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Profit Margin Calculator -->

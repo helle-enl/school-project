@@ -441,7 +441,7 @@
 
         .product-metrics {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -476,9 +476,9 @@
         }
 
         .product-price {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            /* display: flex;
+                                justify-content: space-between;
+                                align-items: center; */
             margin-bottom: 20px;
             padding: 15px;
             background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(129, 199, 132, 0.1));
@@ -489,9 +489,13 @@
         .price-info {
             display: flex;
             flex-direction: column;
+            margin-bottom: 7px
         }
 
         .current-price {
+            display: flex;
+            align-items: center;
+            gap: 4px;
             font-size: 1.5rem;
             font-weight: 700;
             color: #2E7D32;
@@ -954,6 +958,61 @@
                 opacity: 1;
             }
         }
+
+        /* Stock Status Badges */
+        .stock-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .stock-badge.sold-out {
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+        }
+
+        .stock-badge.low-stock {
+            background: rgba(255, 152, 0, 0.9);
+            color: white;
+        }
+
+        /* Product Status Indicators */
+        .status-available {
+            background: rgba(76, 175, 80, 0.1);
+            color: #2E7D32;
+        }
+
+        .status-sold-out {
+            background: rgba(244, 67, 54, 0.1);
+            color: #c62828;
+        }
+
+        .status-low-stock {
+            background: rgba(255, 152, 0, 0.1);
+            color: #f57c00;
+        }
+
+        /* Stock Level Indicators */
+        .stock-level-high {
+            color: #4CAF50;
+        }
+
+        .stock-level-medium {
+            color: #ff9800;
+        }
+
+        .stock-level-low {
+            color: #f44336;
+        }
     </style>
 @endsection
 
@@ -1070,6 +1129,13 @@
         <!-- Products Grid -->
         <div class="products-grid" id="productsGrid">
             @forelse($products as $product)
+                @php
+                    $soldQuantity = $product
+                        ->orders()
+                        ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                        ->sum('quantity');
+                    $availableStock = max(0, $product->total_stock - $soldQuantity);
+                @endphp
                 <div class="product-card fade-in" data-category="{{ $product->category_id ?? '' }}"
                     data-status="{{ $product->status ?? 'published' }}"
                     data-price="{{ $product->selling_price ?? $product->unit_price }}"
@@ -1096,20 +1162,29 @@
                     <div class="product-image">
                         @if ($product->product_image)
                             <img src="{{ asset('product_images/' . $product->product_image) }}"
-                                alt="{{ $product->name }}" loading="lazy">
+                                alt="{{ $product->name }}">
                         @else
-                            <i class="fas fa-leaf placeholder-icon"></i>
+                            <div class="image-placeholder">
+                                <i class="fas fa-leaf"></i>
+                            </div>
                         @endif
 
-                        <!-- Product Status Badge -->
-                        <div class="product-status status-{{ strtolower($product->status ?? 'published') }}">
-                            @if ($product->total_stock <= 0)
-                                Out of Stock
-                            @else
-                                {{ ucfirst($product->status ?? 'Published') }}
-                            @endif
-                        </div>
+                        <!-- Stock Status Badge -->
+                        @if ($availableStock <= 0)
+                            <div class="stock-badge sold-out">
+                                <i class="fas fa-times-circle"></i>
+                                Sold Out
+                            </div>
+                        @elseif($availableStock <= 5)
+                            <div class="stock-badge low-stock">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Low Stock
+                            </div>
+                        @endif
                     </div>
+
+
+
 
                     <!-- Product Content -->
                     <div class="product-content">
@@ -1126,22 +1201,14 @@
                             {{ $product->description ?? 'No description available.' }}
                         </p>
 
-                        <!-- Product Metrics -->
-                        <div class="product-metrics">
-                            <div class="metric">
-                                <span class="metric-value">{{ $product->orders_count ?? 0 }}</span>
-                                <span class="metric-label">Orders</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-value">{{ $product->total_sales ?? 0 }}</span>
-                                <span class="metric-label">Sold</span>
-                            </div>
-                        </div>
+
+
 
                         <!-- Product Price and Stock -->
                         <div class="product-price">
                             <div class="price-info">
                                 <span class="current-price">
+                                    <i class="fas fa-tag"></i>
                                     ₦{{ number_format($product->selling_price ?? $product->unit_price, 2) }}
                                 </span>
                                 <span class="price-unit">per {{ $product->unit_of_measurement }}</span>
@@ -1162,7 +1229,8 @@
                                     }
                                 @endphp
                                 <div class="stock-dot stock-{{ $stockLevel }}"></div>
-                                <span>{{ $stockText }} ({{ $product->total_stock }})</span>
+                                <span>{{ $stockText }} ({{ $availableStock }} available)</span>
+
                             </div>
                         </div>
 
@@ -1184,6 +1252,8 @@
                             </button>
                         </div>
                     </div>
+
+
                 </div>
             @empty
                 <div class="empty-state">

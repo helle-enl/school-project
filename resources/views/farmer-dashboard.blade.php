@@ -611,9 +611,14 @@
                 <tbody>
                     @forelse ($products as $product)
                         @php
-                            $unitsSold = $product->orders->sum('quantity');
+                            $unitsSold = $product->orders
+                                ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                                ->sum('quantity');
+                            $availableStock = max(0, $product->total_stock - $unitsSold);
                             $unitPrice = $product->selling_price ?? $product->unit_price;
-                            $total = $product->orders->sum('total_price');
+                            $total = $product->orders
+                                ->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered'])
+                                ->sum('total_price');
                             $profit = $total - $unitsSold * $product->unit_price;
                             $profitMargin = $total > 0 ? ($profit / $total) * 100 : 0;
                         @endphp
@@ -622,7 +627,7 @@
                                 <div class="product-cell">
                                     <div class="product-image">
                                         @if ($product->product_image)
-                                            <img src="{{ asset('storage/' . $product->product_image) }}"
+                                            <img src="{{ asset('product_images/' . $product->product_image) }}"
                                                 alt="{{ $product->name }}">
                                         @else
                                             <i class="fas fa-leaf"></i>
@@ -648,6 +653,15 @@
                             </td>
                             <td>
                                 <span class="metric-value"
+                                    style="font-size: 1.1rem; color: {{ $availableStock > 0 ? '#4CAF50' : '#f44336' }};">
+                                    {{ $availableStock }}
+                                </span>
+                                <small style="display: block; color: #666;">
+                                    {{ $availableStock > 0 ? 'Available' : 'Sold Out' }}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="metric-value"
                                     style="font-size: 1.1rem;">₦{{ number_format($total, 2) }}</span>
                             </td>
                             <td>
@@ -659,12 +673,13 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="status-badge status-{{ strtolower($product->status ?? 'active') }}">
-                                    {{ ucfirst($product->status ?? 'Active') }}
+                                <span class="status-badge status-{{ $availableStock > 0 ? 'available' : 'sold-out' }}">
+                                    {{ $availableStock > 0 ? 'Available' : 'Sold Out' }}
                                 </span>
                             </td>
                         </tr>
                     @empty
+
                         <tr>
                             <td colspan="7">
                                 <div class="empty-state">
