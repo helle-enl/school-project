@@ -519,6 +519,29 @@
             background: #E55A2B;
             transform: translateY(-2px);
         }
+
+        /* Sold out form styles */
+        .form-input:disabled,
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+            background-color: #f5f5f5;
+        }
+
+        .quantity-btn:disabled:hover {
+            background: transparent !important;
+            color: #ccc !important;
+        }
+
+        .sold-out-overlay {
+            backdrop-filter: blur(2px);
+        }
+
+        .order-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
     </style>
 </head>
 
@@ -811,9 +834,28 @@
     <script>
         const unitPrice = {{ $product->selling_price ?? $product->unit_price }};
         const maxStock = {{ $availableStock }};
+        const isProductAvailable = maxStock > 0;
 
         function updateTotal() {
-            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const quantityInput = document.getElementById('quantity');
+            const orderButton = document.getElementById('orderButton');
+
+            // If product is sold out, disable everything and return
+            if (!isProductAvailable || maxStock <= 0) {
+                quantityInput.disabled = true;
+                quantityInput.value = 0;
+                orderButton.disabled = true;
+                orderButton.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
+                orderButton.style.background = '#f44336';
+                orderButton.style.cursor = 'not-allowed';
+
+                // Update summary to show sold out
+                document.getElementById('summaryQuantity').textContent = '0';
+                document.getElementById('totalAmount').textContent = '₦0';
+                return;
+            }
+
+            const quantity = parseInt(quantityInput.value) || 1;
             const total = quantity * unitPrice;
 
             // Update summary
@@ -822,26 +864,32 @@
 
             // Validate quantity against available stock
             if (quantity > maxStock) {
-                document.getElementById('quantity').value = maxStock;
+                quantityInput.value = maxStock;
                 updateTotal();
                 alert(`Only ${maxStock} units available in stock`);
+                return;
             }
 
-            // Update order button state
-            const orderButton = document.getElementById('orderButton');
-            if (maxStock <= 0) {
-                orderButton.disabled = true;
-                orderButton.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
-            } else if (quantity > maxStock) {
+            // Update order button state for available products
+            if (quantity > maxStock) {
                 orderButton.disabled = true;
                 orderButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Insufficient Stock';
+                orderButton.style.background = '#ff9800';
             } else {
                 orderButton.disabled = false;
                 orderButton.innerHTML = '<i class="fas fa-check-circle"></i> Place Order Now';
+                orderButton.style.background = '';
+                orderButton.style.cursor = 'pointer';
             }
         }
 
         function increaseQuantity() {
+            // Check if product is available
+            if (!isProductAvailable || maxStock <= 0) {
+                alert('This product is currently sold out.');
+                return;
+            }
+
             const quantityInput = document.getElementById('quantity');
             const currentValue = parseInt(quantityInput.value) || 1;
             if (currentValue < maxStock) {
@@ -853,6 +901,12 @@
         }
 
         function decreaseQuantity() {
+            // Check if product is available
+            if (!isProductAvailable || maxStock <= 0) {
+                alert('This product is currently sold out.');
+                return;
+            }
+
             const quantityInput = document.getElementById('quantity');
             const currentValue = parseInt(quantityInput.value) || 1;
             if (currentValue > 1) {
@@ -861,28 +915,37 @@
             }
         }
 
-        // Form submission validation
+        // Enhanced form submission validation
         document.getElementById('orderForm')?.addEventListener('submit', function(e) {
+            e.preventDefault(); // Always prevent default first
+
+            // Check if product is available
+            if (!isProductAvailable || maxStock <= 0) {
+                alert('This product is currently sold out and cannot be ordered.');
+                return false;
+            }
+
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
 
             if (quantity > maxStock) {
-                e.preventDefault();
                 alert(`Sorry, only ${maxStock} units are available in stock.`);
                 return false;
             }
 
-            if (maxStock <= 0) {
-                e.preventDefault();
-                alert('This product is currently sold out.');
+            if (quantity <= 0) {
+                alert('Please select a valid quantity.');
                 return false;
             }
 
-            // Continue with form submission
+            // If all validations pass, submit the form
             const orderButton = document.getElementById('orderButton');
             const originalText = orderButton.innerHTML;
 
             orderButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Order...';
             orderButton.disabled = true;
+
+            // Actually submit the form
+            this.submit();
 
             // Re-enable button after 5 seconds in case of issues
             setTimeout(() => {
@@ -891,72 +954,117 @@
             }, 5000);
         });
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        // Disable quantity input interactions for sold out products
+        document.getElementById('quantity')?.addEventListener('focus', function() {
+            if (!isProductAvailable || maxStock <= 0) {
+                this.blur();
+                alert('This product is currently sold out.');
+            }
+        });
+
+        document.getElementById('quantity')?.addEventListener('input', function() {
+            if (!isProductAvailable || maxStock <= 0) {
+                this.value = 0;
+                updateTotal();
+                return;
+            }
             updateTotal();
         });
 
-        // Smooth scroll to order section
-        function scrollToOrder() {
-            document.querySelector('.order-section')?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTotal();
 
-        // Add click event to product image for enlargement (optional)
-        document.querySelector('.product-image')?.addEventListener('click', function() {
-            // You can implement image modal/lightbox here if needed
-            console.log('Image clicked - implement lightbox if needed');
+            // If sold out, disable all form interactions
+            if (!isProductAvailable || maxStock <= 0) {
+                // Disable all form inputs
+                const formInputs = document.querySelectorAll(
+                    '#orderForm input, #orderForm textarea, #orderForm button');
+                formInputs.forEach(input => {
+                    if (input.type !== 'hidden') {
+                        input.disabled = true;
+                        input.style.opacity = '0.5';
+                        input.style.cursor = 'not-allowed';
+                    }
+                });
+
+                // Show sold out message in form
+                const orderForm = document.getElementById('orderForm');
+                if (orderForm) {
+                    const soldOutMessage = document.createElement('div');
+                    soldOutMessage.className = 'sold-out-overlay';
+                    soldOutMessage.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(244, 67, 54, 0.1);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    z-index: 10;
+                `;
+                    soldOutMessage.innerHTML = `
+                    <div style="text-align: center; color: #f44336; font-weight: 600;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <div>Product Sold Out</div>
+                        <small>This item is currently unavailable</small>
+                    </div>
+                `;
+
+                    orderForm.style.position = 'relative';
+                    orderForm.appendChild(soldOutMessage);
+                }
+            }
         });
 
-        // Real-time stock checking
+        // Enhanced real-time stock checking
         function checkStockAvailability() {
             fetch(`/farm-products/{{ $product->id }}/stock`)
                 .then(response => response.json())
                 .then(data => {
-                    const maxStock = data.available_stock;
+                    const newMaxStock = data.available_stock;
                     const quantityInput = document.getElementById('quantity');
                     const orderButton = document.getElementById('orderButton');
-                    const stockDisplay = document.querySelector('.stock-display');
 
-                    // Update max stock value
-                    if (quantityInput) {
-                        quantityInput.max = maxStock;
+                    // Update global variables
+                    window.maxStock = newMaxStock;
+                    window.isProductAvailable = newMaxStock > 0;
 
-                        // Adjust current quantity if it exceeds available stock
-                        if (parseInt(quantityInput.value) > maxStock) {
-                            quantityInput.value = Math.max(1, maxStock);
-                            updateTotal();
+                    // Update form state based on new stock
+                    if (newMaxStock <= 0) {
+                        // Product became sold out
+                        quantityInput.disabled = true;
+                        quantityInput.value = 0;
+                        orderButton.disabled = true;
+                        orderButton.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
+                        orderButton.style.background = '#f44336';
+
+                        // Update stock display in meta
+                        const stockMeta = document.querySelector('.meta-item span');
+                        if (stockMeta && stockMeta.textContent.includes('Stock:')) {
+                            stockMeta.innerHTML = '<span style="color: #f44336; font-weight: 600;">Sold Out</span>';
+                        }
+                    } else {
+                        // Product became available
+                        quantityInput.disabled = false;
+                        quantityInput.max = newMaxStock;
+
+                        // Adjust current quantity if it exceeds new stock
+                        if (parseInt(quantityInput.value) > newMaxStock) {
+                            quantityInput.value = Math.min(1, newMaxStock);
+                        }
+
+                        // Update stock display
+                        const stockMeta = document.querySelector('.meta-item span');
+                        if (stockMeta) {
+                            stockMeta.innerHTML = `Stock: ${newMaxStock} available`;
                         }
                     }
 
-                    // Update stock display
-                    if (stockDisplay) {
-                        if (maxStock > 0) {
-                            stockDisplay.innerHTML = `<i class="fas fa-box"></i> Stock: ${maxStock} available`;
-                            stockDisplay.style.color = '#4CAF50';
-                        } else {
-                            stockDisplay.innerHTML = `<i class="fas fa-times-circle"></i> Sold Out`;
-                            stockDisplay.style.color = '#f44336';
-                        }
-                    }
-
-                    // Update order button
-                    if (orderButton) {
-                        if (maxStock <= 0) {
-                            orderButton.disabled = true;
-                            orderButton.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
-                            orderButton.style.background = '#f44336';
-                        } else {
-                            orderButton.disabled = false;
-                            orderButton.innerHTML = '<i class="fas fa-check-circle"></i> Place Order Now';
-                            orderButton.style.background = '';
-                        }
-                    }
-
-                    // Update global maxStock variable
-                    window.maxStock = maxStock;
+                    updateTotal();
                 })
                 .catch(error => {
                     console.error('Error checking stock:', error);
@@ -966,13 +1074,14 @@
         // Check stock every 30 seconds
         setInterval(checkStockAvailability, 30000);
 
-        // Check stock when page becomes visible (user switches back to tab)
+        // Check stock when page becomes visible
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 checkStockAvailability();
             }
         });
     </script>
+
 </body>
 
 </html>
