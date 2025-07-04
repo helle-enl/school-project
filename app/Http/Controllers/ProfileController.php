@@ -51,7 +51,7 @@ class ProfileController extends Controller
             'state' => 'nullable|string|max:100',
             'city' => 'required|string|max:100',
             'address' => 'nullable|string|max:255',
-            'farm_name' => 'required|string|max:255',
+            'farm_name' => 'nullable|string|max:255',
             'farm_location' => 'nullable|string|max:255',
             'farm_size' => 'nullable|string|max:255',
             'farm_type' => 'nullable|in:crop,livestock,mixed',
