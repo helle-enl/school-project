@@ -5,6 +5,9 @@ WORKDIR /app
 # Copy app
 COPY . /app
 
+# Add this line after COPY
+RUN rm -f /app/.env
+
 # Copy custom PHP config
 COPY php.ini /opt/docker/etc/php/php.ini
 
@@ -30,3 +33,4 @@ RUN php artisan migrate --force \
 # Fix permissions for Laravel
 RUN chown -R application:application /app \
  && chmod -R ug+rw /app
+
