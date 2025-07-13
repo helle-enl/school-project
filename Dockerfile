@@ -1,7 +1,10 @@
 FROM richarvey/nginx-php-fpm:3.1.6
 
-COPY . .
+COPY . /var/www/html
 
+# Override default PHP settings
+COPY php.ini /etc/php5/fpm/conf.d/99-custom.ini
+COPY php.ini /etc/php5/cli/conf.d/99-custom.ini
 # Image config
 ENV SKIP_COMPOSER 1
 ENV WEBROOT /var/www/html/public
