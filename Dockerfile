@@ -1,27 +1,26 @@
 FROM webdevops/php-nginx:8.2
 
-# Set memory limit
+# Set working directory
+WORKDIR /app
+
+# Copy app files
+COPY . /app
+
+# Override PHP memory limit
 ENV PHP_MEMORY_LIMIT=512M
 
+# Override default PHP settings (correct path for this image)
+COPY php.ini /opt/docker/etc/php/php.ini
 
-COPY . /var/www/html
+# Set Laravel public path for Nginx
+ENV WEB_DOCUMENT_ROOT=/app/public
 
-# Override default PHP settings
-COPY php.ini /etc/php5/fpm/conf.d/99-custom.ini
-COPY php.ini /etc/php5/cli/conf.d/99-custom.ini
-# Image config
-ENV SKIP_COMPOSER 1
-ENV WEBROOT /var/www/html/public
-ENV PHP_ERRORS_STDERR 1
-ENV RUN_SCRIPTS 1
-ENV REAL_IP_HEADER 1
+# Laravel runtime environment
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV LOG_CHANNEL=stderr
 
-# Laravel config
-ENV APP_ENV production
-ENV APP_DEBUG false
-ENV LOG_CHANNEL stderr
+# Allow composer to run as root (if needed)
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Allow composer to run as root
-ENV COMPOSER_ALLOW_SUPERUSER 1
-
-CMD ["/start.sh"]
+# NO CMD needed - image handles PHP-FPM + Nginx
