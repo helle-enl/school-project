@@ -3,13 +3,7 @@ FROM webdevops/php-nginx:8.2
 # Set working directory
 WORKDIR /app
 
-# Copy composer files early to cache dependencies
-COPY composer.json composer.lock ./
-
-# Install PHP dependencies (prod mode, optimized autoload)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Now copy the rest of your app files
+# Copy full app into the container
 COPY . /app
 
 # Set PHP memory limit
@@ -26,13 +20,16 @@ ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV LOG_CHANNEL=stderr
 
-# Allow composer to run as root (Render runs as root)
+# Allow Composer to run as root (Render uses root)
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Optional: run artisan commands on container boot (uncomment if needed)
+# Install dependencies AFTER all files have been copied (important!)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Optional: Laravel optimizations
+RUN php artisan key:generate
 RUN php artisan config:cache
 RUN php artisan route:cache
 RUN php artisan view:cache
-RUN php artisan key:generate
 
-# No CMD required; webdevops handles PHP-FPM + Nginx
+# No CMD needed – webdevops/php-nginx already starts nginx + PHP-FPM
