@@ -1,4 +1,8 @@
-FROM richarvey/nginx-php-fpm:3.1.6
+FROM webdevops/php-nginx:8.2
+
+# Set memory limit
+ENV PHP_MEMORY_LIMIT=512M
+
 
 COPY . /var/www/html
 
