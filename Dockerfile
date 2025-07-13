@@ -2,35 +2,33 @@ FROM webdevops/php-nginx:8.2
 
 WORKDIR /app
 
-# Copy app
+# Copy app source
 COPY . /app
 
-# Add this line after COPY
-RUN rm -f /app/.env
-
-# Copy custom PHP config
+# Copy PHP config
 COPY php.ini /opt/docker/etc/php/php.ini
 
-# Set Laravel public dir
+# Copy start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Set Laravel doc root
 ENV WEB_DOCUMENT_ROOT=/app/public
 
-# Environment config
+# ENV variables (Laravel, PHP)
 ENV PHP_MEMORY_LIMIT=512M
 ENV APP_ENV=production
-ENV APP_DEBUG=true
+ENV APP_DEBUG=false
 ENV LOG_CHANNEL=stderr
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Install PHP dependencies (no scripts yet)
+# Install PHP dependencies (no scripts)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Laravel optimizations
-RUN php artisan migrate --force \
- && php artisan config:cache \
- && php artisan route:cache \
- && php artisan view:cache
+# Final permissions
+RUN chown -R application:application /app
 
-# Fix permissions for Laravel
-RUN chown -R application:application /app \
- && chmod -R ug+rw /app
+USER application
 
+# Run custom start script instead of default CMD
+CMD ["/app/start.sh"]
