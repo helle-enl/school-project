@@ -30,8 +30,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Laravel commands
-RUN php artisan key:generate \
- && php artisan config:cache \
+RUN php artisan config:cache \
  && php artisan route:cache \
  && php artisan view:cache \
  && php artisan migrate --force
