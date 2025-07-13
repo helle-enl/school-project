@@ -24,7 +24,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 # --- SETUP ---
 
 # Copy .env if you have a production one (Optional: comment this out if you generate it dynamically)
-COPY .env.example .env
+# COPY .env.example .env
 
 # Install composer dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
