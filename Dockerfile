@@ -22,5 +22,9 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Do NOT run artisan commands here
+# Ensure Laravel can write to needed directories
+RUN chown -R application:application /app \
+ && chmod -R ug+rw /app
+
 # Let them run at container start where .env exists
 CMD ["/app/start.sh"]
