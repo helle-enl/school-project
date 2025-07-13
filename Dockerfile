@@ -23,3 +23,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 
 # Do NOT run artisan commands here
 # Let them run at container start where .env exists
+CMD ["/app/start.sh"]
