@@ -1,17 +1,20 @@
 #!/bin/bash
 
-# Fail on errors
-set -e
+echo "🎬 Starting Laravel..."
 
-# Setup Laravel
-echo "Running Laravel setup..."
+# Laravel needs no .env in container — use Render ENV
+rm -f /app/.env
+
+# Permissions fix
+chown -R application:application /app
+chmod -R ug+rw /app/storage /app/bootstrap/cache
+
+# Laravel boot logic
 php artisan config:clear
-php artisan key:generate --force
-php artisan migrate --force
 php artisan config:cache
+php artisan migrate --force
 php artisan route:cache
 php artisan view:cache
 
-# Start PHP-FPM (used by webdevops/php-nginx)
-echo "Starting PHP-FPM..."
-php-fpm
+# Start supervisord (nginx + php-fpm)
+exec /opt/docker/bin/entrypoint supervisord
