@@ -6,16 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-
+        // Users table
         Schema::create('users', function (Blueprint $table) {
             $table->id();
 
-            // Name Fields
+            // Name
             $table->string('first_name');
             $table->string('last_name');
 
@@ -31,20 +28,19 @@ return new class extends Migration
             $table->string('country')->nullable();
             $table->string('address')->nullable();
 
-            // Role: farmer or buyer
+            // Role
             $table->enum('role', ['farmer', 'buyer'])->default('buyer');
 
-
-            // Farm Details (only for farmers)
+            // Farmer Info
             $table->string('farm_name')->nullable();
             $table->string('farm_location')->nullable();
-            $table->string('farm_size')->nullable();  // e.g., in hectares or acres
+            $table->string('farm_size')->nullable(); // Prefer storing this as string unless you want numeric sorting
             $table->enum('farm_type', ['crop', 'livestock', 'mixed'])->nullable();
-            $table->text('about_farmer')->nullable();   // A brief about the farmer
-            $table->json('social_media')->nullable();  // Social media links (as JSON)
-            $table->string('farm_contact')->nullable();  // Contact number specific to the farm
+            $table->text('about_farmer')->nullable();
+            $table->json('social_media')->nullable(); // PostgreSQL handles JSON well, MySQL 5.7+ too
+            $table->string('farm_contact')->nullable();
 
-            // Auth fields
+            // Auth
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
@@ -52,30 +48,28 @@ return new class extends Migration
             $table->timestamps();
         });
 
-
+        // Password resets
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
+        // Sessions table (Postgres note: bigint = integer mismatch fix)
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
-            $table->integer('last_activity')->index();
+            $table->unsignedBigInteger('last_activity')->index(); // Use unsignedBigInteger for cross-db compatibility
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };
