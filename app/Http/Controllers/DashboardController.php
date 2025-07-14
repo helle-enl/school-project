@@ -124,6 +124,19 @@ class DashboardController extends Controller
 
 
             // Top selling products with category information (confirmed orders only)
+            // $topSellingProducts = FarmProduct::where('farmer_id', $user->id)
+            //     ->with('category')
+            //     ->withSum(['orders as units_sold' => function ($query) {
+            //         $query->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
+            //     }], 'quantity')
+            //     ->withSum(['orders as total_sales' => function ($query) {
+            //         $query->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
+            //     }], 'total_price')
+            //     ->having('units_sold', '>', 0)
+            //     ->orderByDesc('units_sold')
+            //     ->take(10)
+            //     ->get();
+
             $topSellingProducts = FarmProduct::where('farmer_id', $user->id)
                 ->with('category')
                 ->withSum(['orders as units_sold' => function ($query) {
@@ -132,7 +145,9 @@ class DashboardController extends Controller
                 ->withSum(['orders as total_sales' => function ($query) {
                     $query->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
                 }], 'total_price')
-                ->having('units_sold', '>', 0)
+                ->whereHas('orders', function ($query) {
+                    $query->whereIn('status', ['confirmed', 'completed', 'shipped', 'delivered']);
+                }) // Ensures at least one order exists in those statuses
                 ->orderByDesc('units_sold')
                 ->take(10)
                 ->get();
