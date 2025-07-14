@@ -6,15 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('farm_product_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('farmer_id');
+            $table->foreignId('farmer_id')->constrained('users')->onDelete('cascade');
             $table->longText('description')->nullable();
             $table->timestamps();
         });
@@ -24,11 +21,11 @@ return new class extends Migration
             $table->string('name');
             $table->longText('description')->nullable();
             $table->foreignId('category_id')->constrained('farm_product_categories')->onDelete('cascade');
-            $table->string('farmer_id');
+            $table->foreignId('farmer_id')->constrained('users')->onDelete('cascade');
             $table->string('unit_of_measurement')->comment('Unit of Measurement');
-            $table->string('unit_price');
-            $table->string('selling_price')->nullable();
-            $table->string('total_stock')->nullable()->default('0');
+            $table->decimal('unit_price', 10, 2);
+            $table->decimal('selling_price', 10, 2)->nullable();
+            $table->integer('total_stock')->default(0)->nullable();
             $table->string('product_image')->nullable();
             $table->string('tags')->nullable();
             $table->enum('status', ['published', 'draft', 'inactive'])->default('published');
@@ -36,12 +33,9 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('farm_products');
-        Schema::dropIfExists('farm_products_categories');
+        Schema::dropIfExists('farm_product_categories');
     }
 };
