@@ -9,5 +9,4 @@ php artisan migrate --force || true
 php artisan route:cache || true
 php artisan view:cache || true
 
-# Start supervisord (nginx + php-fpm)
-exec /opt/docker/bin/entrypoint supervisord
+
